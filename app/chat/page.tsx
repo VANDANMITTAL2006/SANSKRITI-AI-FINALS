@@ -33,8 +33,23 @@ export default function ChatPage() {
   const [monuments, setMonuments] = useState<Monument[]>([])
   const [listening, setListening] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const lastWasVoiceRef = useRef(false)
   const { toast, showToast, hideToast } = useToast()
   const { user } = useAuth()
+
+  // Browser TTS helper — speaks AI answers aloud
+  const speakText = (text: string) => {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-US'
+    utterance.rate = 0.9
+    utterance.pitch = 1.0
+    const voices = window.speechSynthesis.getVoices()
+    const voice = voices.find(v => v.lang.includes(lang === 'hi' ? 'hi' : 'en'))
+    if (voice) utterance.voice = voice
+    window.speechSynthesis.speak(utterance)
+  }
 
   // Vapi voice call hook
   const {
@@ -82,6 +97,11 @@ export default function ChatPage() {
       const res = await api.askChat(text, monumentId)
       const aiAnswer = res.data.answer
       setMessages(prev => [...prev, { id: prev.length + 1, role: "assistant", content: aiAnswer }])
+      // Speak AI answer if the question was voice-initiated
+      if (lastWasVoiceRef.current) {
+        speakText(aiAnswer)
+        lastWasVoiceRef.current = false
+      }
       if (user) { saveChatMessage(user.id, 'user', text, monumentId).catch(() => null); saveChatMessage(user.id, 'assistant', aiAnswer, monumentId).catch(() => null) }
     } catch {
       setMessages(prev => [...prev, { id: prev.length + 1, role: "assistant", content: t('sorry_trouble') }])
@@ -101,7 +121,7 @@ export default function ChatPage() {
     recognition.onstart = () => { setListening(true); showToast(t('listening')) }
     recognition.onend = () => setListening(false)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (e: any) => { const transcript = e.results[0][0].transcript as string; setInput(transcript); sendMessage(transcript) }
+    recognition.onresult = (e: any) => { const transcript = e.results[0][0].transcript as string; setInput(transcript); lastWasVoiceRef.current = true; sendMessage(transcript) }
     try { recognition.start() } catch { setListening(false) }
   }
 

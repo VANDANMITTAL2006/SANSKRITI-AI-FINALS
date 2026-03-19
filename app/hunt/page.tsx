@@ -469,6 +469,9 @@ export default function HuntPage() {
   const [celebrateXp, setCelebrateXp] = useState<number | null>(null)
   const [celebrateMedal, setCelebrateMedal] = useState('')
 
+  // ─── Guard ref: prevents double-firing of onClueVerified ───
+  const isAdvancingRef = useRef(false)
+
   const monumentName = MONUMENT_NAMES[huntMonumentId] || huntMonumentId
   const activeRiddles = MONUMENT_RIDDLES[huntMonumentId] || TAJ_MAHAL_RIDDLES
   const activeRiddle = activeRiddles[activeClueIdx]
@@ -515,11 +518,9 @@ export default function HuntPage() {
   }, [monumentSelected, geoStatus, demoMode, huntMonumentId, activeRiddles])
 
   // ─── Auto-advance when locationVerified → true ───
-  // This useEffect is the single source of truth for advancing clues.
-  // It fires 1.5s after verification, then calls advanceToNextClue()
-  // which resets all per-clue state BEFORE incrementing activeClueIdx.
   useEffect(() => {
     if (!locationVerified) return
+    if (!isAdvancingRef.current) return // only advance if WE set locationVerified
     const timer = setTimeout(() => {
       advanceToNextClue()
     }, 1500)
@@ -593,6 +594,7 @@ export default function HuntPage() {
   // ─── Verify current clue location ───
   const verifyClueLocation = () => {
     if (!activeRiddle) return
+    if (isAdvancingRef.current) return // guard: already advancing
 
     if (demoMode) {
       onClueVerified()
@@ -616,27 +618,26 @@ export default function HuntPage() {
   }
 
   // ─── Advance to next clue with clean state reset ───
-  // IMPORTANT: uses functional updater for setActiveClueIdx to avoid
-  // stale closure — prev always has the current live value.
+  // Uses functional updater to avoid stale closure on activeClueIdx.
   const advanceToNextClue = () => {
-    // Reset all per-clue state FIRST so old clue content disappears
     setLocationVerified(false)
     setCheckingGeo(false)
     setShowHint(false)
     setUserDistance(null)
 
-    // Use functional updater — prev is always the live current value,
-    // NOT the stale closure value captured when this function was created.
     setTimeout(() => {
       setActiveClueIdx(prev => {
         const next = prev + 1
         if (next < activeRiddles.length) {
           window.scrollTo({ top: 0, behavior: 'smooth' })
+          // Release guard after new clue is stable
+          setTimeout(() => { isAdvancingRef.current = false }, 500)
           return next
         } else {
-          // Last clue done — trigger completion (setTimeout to avoid state-in-state)
+          // Last clue — trigger completion
           setTimeout(() => {
             setHuntCompleted(true)
+            isAdvancingRef.current = false
             if (user?.id) {
               addXP(user.id, 500, 'HUNT_COMPLETED').then(async (newXP) => {
                 setProfile((p: Record<string, unknown> | null) => p ? { ...p, total_xp: newXP } : p)
@@ -646,7 +647,7 @@ export default function HuntPage() {
             }
             showToast('+500 XP — Hunt Completed! 🏆')
           }, 0)
-          return prev // keep idx at last clue until completion screen shows
+          return prev
         }
       })
     }, 300)
@@ -654,7 +655,10 @@ export default function HuntPage() {
 
   // ─── On Clue Verified ───
   const onClueVerified = async () => {
-    if (!activeRiddle) return // Guard: never run if no active riddle
+    if (!activeRiddle) return
+    if (isAdvancingRef.current) return // GUARD: prevent double-firing
+    isAdvancingRef.current = true      // lock immediately
+
     setLocationVerified(true)
     const clueId = activeRiddle.id
     const userName = user?.id || 'demo_user'
@@ -697,7 +701,7 @@ export default function HuntPage() {
     setCelebrateXp(xpAmount)
     setCelebrateMedal(medal)
 
-    // Clear celebration animation before auto-advance fires (useEffect handles the actual advance)
+    // Clear celebration before auto-advance fires via useEffect
     setTimeout(() => {
       setCelebrateXp(null)
       setCelebrateMedal('')
@@ -873,6 +877,7 @@ export default function HuntPage() {
                       setPlayerStates(makePlayers(id))
                       setUserLat(start.lat); setUserLng(start.lng)
                       setLocationVerified(false); setShowHint(false); setClueCompletions({})
+                      isAdvancingRef.current = false // reset guard when monument changes
                     }}
                     style={{
                       fontFamily: 'Georgia,serif', fontSize: '20px', fontWeight: 700,

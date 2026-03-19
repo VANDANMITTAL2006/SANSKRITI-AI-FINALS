@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/authContext"
 import { saveChatMessage } from "@/lib/authClient"
 import { useLang } from "@/lib/languageContext"
 import { useVapi } from "@/hooks/useVapi"
+import { getChatCacheKey, getCache, setCache, CACHE_DURATION } from '@/lib/cache'
 
 interface Message { id: number; role: "assistant" | "user"; content: string }
 interface Monument { id: string; name: string }
@@ -120,12 +121,36 @@ export default function ChatPage() {
 
   // ── Send Message ───────────────────────────────────────
   const sendMessage = async (text: string) => {
-    if (!text.trim() || loading) return
-    const userMsg: Message = { id: messages.length + 1, role: "user", content: text }
-    setMessages(prev => [...prev, userMsg]); setInput(""); setLoading(true)
+    const trimmed = text.trim()
+    if (!trimmed || loading) return
+    const userMsg: Message = { id: Date.now(), role: "user", content: trimmed }
+    setMessages(prev => [...prev, userMsg])
+    setInput("")
+    setLoading(true)
+
+    // Check cache first
+    const cacheKey = getChatCacheKey(trimmed, monumentId)
+    const cachedAnswer = getCache(cacheKey, CACHE_DURATION.chat)
+    
+    if (cachedAnswer) {
+      // ✨ Voice in → voice out ONLY (no text bubble)
+      if (lastWasVoiceRef.current) {
+        speakText(cachedAnswer)
+        lastWasVoiceRef.current = false
+      } else {
+        // Text in → text out only + lightning bolt for cached result
+        setMessages(prev => [...prev, { id: Date.now() + 1, role: "assistant", content: cachedAnswer + ' ⚡' }])
+      }
+      setLoading(false)
+      return
+    }
+
     try {
-      const res = await api.askChat(text, monumentId)
+      const res = await api.askChat(trimmed, monumentId)
       const aiAnswer = res.data.answer
+
+      // Cache the response
+      setCache(cacheKey, aiAnswer)
 
       // ✨ Voice in → voice out ONLY (no text bubble)
       if (lastWasVoiceRef.current) {
@@ -133,12 +158,15 @@ export default function ChatPage() {
         lastWasVoiceRef.current = false
       } else {
         // Text in → text out only
-        setMessages(prev => [...prev, { id: prev.length + 1, role: "assistant", content: aiAnswer }])
+        setMessages(prev => [...prev, { id: Date.now() + 1, role: "assistant", content: aiAnswer }])
       }
 
-      if (user) { saveChatMessage(user.id, 'user', text, monumentId).catch(() => null); saveChatMessage(user.id, 'assistant', aiAnswer, monumentId).catch(() => null) }
+      if (user) { 
+        saveChatMessage(user.id, 'user', trimmed, monumentId).catch(() => null)
+        saveChatMessage(user.id, 'assistant', aiAnswer, monumentId).catch(() => null) 
+      }
     } catch {
-      setMessages(prev => [...prev, { id: prev.length + 1, role: "assistant", content: t('sorry_trouble') }])
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: "assistant", content: t('sorry_trouble') }])
     } finally { setLoading(false) }
   }
 

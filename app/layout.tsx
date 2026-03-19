@@ -8,6 +8,7 @@ import { AuthProvider } from '@/lib/authContext'
 import { AuthGuard } from '@/components/auth-guard'
 import { LanguageProvider } from '@/lib/languageContext'
 import { ClientLangWrapper } from '@/components/client-lang-wrapper'
+import { BackendPrewarmer } from '@/components/BackendPrewarmer'
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -42,6 +43,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" />
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-[#0F0B1E] text-[#F5E6D3]`}>
+        <BackendPrewarmer />
         <AuthProvider>
           <AuthGuard>
             <LanguageProvider>

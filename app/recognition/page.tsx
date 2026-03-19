@@ -15,6 +15,10 @@ import { addXP, addMonumentVisited, computeAndSaveBadges } from "@/lib/authClien
 import { saveMonument, monumentNameToId } from "@/lib/monumentStore"
 import { useLang } from "@/lib/languageContext"
 import { useAudioGuide } from "@/hooks/useAudioGuide"
+import { 
+  getImageCacheKey, getCache, setCache, 
+  CACHE_DURATION, prewarmBackend 
+} from '@/lib/cache'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RecognitionResult = Record<string, any>
@@ -67,6 +71,11 @@ export default function RecognitionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Prewarm backend on page load
+  useEffect(() => {
+    prewarmBackend()
+  }, [])
+
   const handleFileUpload = async (file: File) => {
     if (!file) return
     setLoading(true)
@@ -99,10 +108,22 @@ export default function RecognitionPage() {
       img.src = URL.createObjectURL(f)
     })
 
+    const cacheKey = getImageCacheKey(file)
+    const cached = getCache(cacheKey, CACHE_DURATION.recognition)
+    if (cached) {
+      setResult(cached)
+      setLoading(false)
+      showToast('⚡ Instant result!')
+      return
+    }
+
     try {
       const base64 = await compressImage(file)
       const res = await api.recognize(base64, file.name)
-      setResult(res.data)
+      const resultData = res.data
+
+      setCache(cacheKey, resultData)
+      setResult(resultData)
 
       if (
         res.data.monument_name &&

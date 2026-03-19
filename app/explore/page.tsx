@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { useAuth } from "@/lib/authContext"
-import { addXP } from "@/lib/authClient"
+import { addXP, computeAndSaveBadges } from "@/lib/authClient"
 import { useVapi } from "@/hooks/useVapi"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -184,6 +184,28 @@ export default function ExplorePage() {
   const zone = TAJ_ZONES[currentZoneIndex]
   const bearing = getBearing(userPos, { lat: zone.lat, lng: zone.lng })
 
+  // ── SPEAK FACT (browser TTS with voice selection) ────────
+  const speakFact = useCallback((text: string) => {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.88
+    utterance.pitch = 1.0
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find(v =>
+      v.name.includes('Google') ||
+      v.name.includes('Samantha') ||
+      v.name.includes('Daniel') ||
+      v.lang.includes('en-US')
+    )
+    if (preferred) utterance.voice = preferred
+    utterance.onstart = () => setIsTTSSpeaking(true)
+    utterance.onend = () => setIsTTSSpeaking(false)
+    utterance.onerror = () => setIsTTSSpeaking(false)
+    window.speechSynthesis.speak(utterance)
+  }, [])
+
   // ── DEMO: simulate walking toward zone ──────────────────
   useEffect(() => {
     if (!demoMode || arrivedAtZone) return
@@ -201,12 +223,17 @@ export default function ExplorePage() {
     return () => clearInterval(interval)
   }, [currentZoneIndex, arrivedAtZone, demoMode])
 
-  // Reset distance when zone changes
+  // Reset distance when zone changes + auto-speak direction hint
   useEffect(() => {
     setDemoDistance(Math.floor(Math.random() * 150) + 150)
     setArrivedAtZone(false)
     setShowFact(false)
-  }, [currentZoneIndex])
+    // Auto-narrate direction hint after short delay
+    const timer = setTimeout(() => {
+      speakFact(TAJ_ZONES[currentZoneIndex].direction_hint)
+    }, 1000)
+    return () => { clearTimeout(timer); window.speechSynthesis?.cancel() }
+  }, [currentZoneIndex, speakFact])
 
   // ── HANDLE ARRIVAL ──────────────────────────────────────
   const handleArrival = useCallback(async () => {
@@ -217,36 +244,25 @@ export default function ExplorePage() {
 
     const z = TAJ_ZONES[currentZoneIndex]
 
+    // Write XP to Supabase
     if (user) {
       try {
         const newXP = await addXP(user.id, z.xp, 'ZONE_EXPLORE')
-        setProfile((prev: any) => prev ? { ...prev, total_xp: newXP } : prev)
+        setProfile((prev: any) => ({ ...prev, total_xp: newXP }))
         window.dispatchEvent(new Event('xp-updated'))
+        const updatedProfile = { ...profile, total_xp: newXP }
+        await computeAndSaveBadges(user.id, updatedProfile)
       } catch (err) { console.warn('XP award failed:', err) }
     }
     setXpEarned(z.xp)
     setCompletedZones(prev => [...prev, z.id])
 
+    // Auto-narrate the arrival fact
     if (isCallActive) {
       sendZoneContext(z.name, z.arrival_fact, 'taj-mahal')
-    } else {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel()
-        setIsTTSSpeaking(true)
-        const sentences = z.arrival_fact.match(/[^.!?]+[.!?]+/g) || [z.arrival_fact]
-        let idx = 0
-        const speakNext = () => {
-          if (idx >= sentences.length) { setIsTTSSpeaking(false); return }
-          const u = new SpeechSynthesisUtterance(sentences[idx].trim())
-          u.lang = 'en-US'; u.rate = 0.88
-          u.onend = () => { idx++; speakNext() }
-          u.onerror = () => setIsTTSSpeaking(false)
-          window.speechSynthesis.speak(u)
-        }
-        speakNext()
-      }
     }
-  }, [arrivedAtZone, currentZoneIndex, user, isCallActive, sendZoneContext, setProfile])
+    speakFact(z.arrival_fact)
+  }, [arrivedAtZone, currentZoneIndex, user, profile, isCallActive, sendZoneContext, setProfile, speakFact])
 
   const stopNarration = useCallback(() => {
     window.speechSynthesis?.cancel()
@@ -470,20 +486,37 @@ export default function ExplorePage() {
 
               {/* Speaking indicator + stop button */}
               {(isSpeaking || isTTSSpeaking) && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ color: '#C9A84C', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: 'pulse 1s infinite' }} />
-                    AI Guide is narrating...
-                  </div>
+                <div style={{
+                  background: 'rgba(201,168,76,0.1)',
+                  border: '1px solid #C9A84C44',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    width: '8px', height: '8px',
+                    borderRadius: '50%',
+                    background: '#C9A84C',
+                    animation: 'pulse 1s infinite'
+                  }}/>
+                  <span style={{ color: '#C9A84C', fontSize: '13px' }}>
+                    🔊 Audio guide narrating...
+                  </span>
                   <button
                     onClick={stopNarration}
                     style={{
-                      background: 'rgba(220,38,38,0.2)', border: '1px solid rgba(220,38,38,0.5)',
-                      borderRadius: '8px', padding: '6px 14px', color: '#f87171',
-                      fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                      marginLeft: 'auto',
+                      background: 'none',
+                      border: 'none',
+                      color: '#C4A882',
+                      cursor: 'pointer',
+                      fontSize: '12px'
                     }}
                   >
-                    ⏹️ Stop
+                    ⏹ Stop
                   </button>
                 </div>
               )}
@@ -491,7 +524,10 @@ export default function ExplorePage() {
               {/* Next zone or complete */}
               {currentZoneIndex < TAJ_ZONES.length - 1 ? (
                 <button
-                  onClick={() => setCurrentZoneIndex(prev => prev + 1)}
+                  onClick={() => {
+                    window.speechSynthesis?.cancel()
+                    setCurrentZoneIndex(prev => prev + 1)
+                  }}
                   style={{
                     background: 'linear-gradient(135deg,#C9A84C,#D4893F)', borderRadius: '12px',
                     padding: '12px 24px', color: '#0F0B1E', fontWeight: '700', fontSize: '15px',

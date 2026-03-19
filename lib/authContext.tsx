@@ -85,37 +85,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // CRITICAL: getSession on mount handles page refresh
-  // Without this, profile never loads on refresh
+  // CRITICAL: Initialize auth on mount — MUST resolve within 3 seconds or timeout
   useEffect(() => {
-    // TIMEOUT FALLBACK — if auth takes too long, stop loading
-    const timeout = setTimeout(() => {
-      setLoading(false)
-    }, 3000)
+    let resolved = false
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      clearTimeout(timeout)
-      if (error) {
-        // Stale/invalid token — clear it so app loads normally next time
-        supabase.auth.signOut().catch(() => {})
-        setUser(null)
-        setLoading(false)
-        return
-      }
+    const timeoutPromise = new Promise<null>(resolve =>
+      setTimeout(() => resolve(null), 2500)
+    )
+    const sessionPromise = supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) {
+          supabase.auth.signOut().catch(() => {})
+          return null
+        }
+        return session
+      })
+      .catch(() => null)
+
+    Promise.race([sessionPromise, timeoutPromise]).then(session => {
+      if (resolved) return
+      resolved = true
       setUser(session?.user ?? null)
       if (session?.user) {
-        fetchProfile(session.user.id).finally(() => {
-          setLoading(false)
-        })
+        fetchProfile(session.user.id).finally(() => setLoading(false))
       } else {
         setLoading(false)
       }
-    }).catch(() => {
-      clearTimeout(timeout)
-      setLoading(false)
     })
 
-    // This handles login/logout/token refresh
+    // Handles login/logout/token refresh after initial load
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null)
@@ -129,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     )
 
     return () => {
-      clearTimeout(timeout)
+      resolved = true // prevent late resolution from setting state
       subscription.unsubscribe()
       window.removeEventListener('focus', refetch)
       window.removeEventListener('xp-updated', refetch)

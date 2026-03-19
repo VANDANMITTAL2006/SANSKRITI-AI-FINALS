@@ -16,8 +16,8 @@ export function getMonument(): StoredMonument | null {
     const saved = localStorage.getItem('sanskriti_last_monument')
     if (!saved) return null
     const data: StoredMonument = JSON.parse(saved)
-    // Valid for 2 hours
-    if (Date.now() - data.timestamp < 2 * 60 * 60 * 1000) {
+    // Valid for 24 hours (extended from 2hrs for better demo experience)
+    if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
       return data
     }
     return null

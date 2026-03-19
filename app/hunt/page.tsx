@@ -618,7 +618,9 @@ export default function HuntPage() {
   }
 
   // ─── On Clue Verified — single entry point, drives entire advance sequence ───
-  const onClueVerified = async () => {
+  // NOTE: NOT async — the setTimeout(1500) must always fire unconditionally.
+  // XP is fire-and-forget (.then/.catch) so a slow/hung network never blocks advancement.
+  const onClueVerified = () => {
     if (!activeRiddle) return
     if (isAdvancingRef.current) return
     isAdvancingRef.current = true
@@ -633,29 +635,27 @@ export default function HuntPage() {
     setCompletedClues(prev => new Set([...prev, clueId]))
     setXpEarned(prev => prev + xpAmount)
 
-    // Award XP to Supabase — await it so we know it worked
+    // Award XP — fire-and-forget, NEVER block the advance timer
     if (user?.id) {
-      try {
-        const newXP = await addXP(user.id, xpAmount, 'HUNT_STEP_DONE')
-        setProfile((prev: any) => prev ? { ...prev, total_xp: newXP } : prev)
-        window.dispatchEvent(new Event('xp-updated'))
-        computeAndSaveBadges(user.id, { ...profile, total_xp: newXP }).catch(() => {})
-      } catch(e) {
-        console.error('XP award failed:', e)
-      }
+      addXP(user.id, xpAmount, 'HUNT_STEP_DONE')
+        .then(newXP => {
+          setProfile((prev: any) => prev ? { ...prev, total_xp: newXP } : prev)
+          window.dispatchEvent(new Event('xp-updated'))
+          computeAndSaveBadges(user.id, { ...profile, total_xp: newXP }).catch(() => {})
+        })
+        .catch(e => console.error('XP award failed:', e))
     }
 
-    // Show toast
+    // Show toast immediately
     showToast('🥇 First to find it! +' + xpAmount + ' XP')
 
-    // Wait 1.5s then advance to next clue
+    // Always advance after 1.5s — regardless of XP network outcome
     setTimeout(() => {
-      // Hide verified message
       setLocationVerified(false)
       setCheckingGeo(false)
       setShowHint(false)
 
-      // Advance clue index using functional updater (no stale closure)
+      // Functional updater avoids stale closure on activeClueIdx
       setActiveClueIdx(prev => {
         const next = prev + 1
 
@@ -668,16 +668,17 @@ export default function HuntPage() {
           return next
         } else {
           // All clues done — hunt complete
-          setTimeout(async () => {
+          setTimeout(() => {
             setHuntCompleted(true)
             isAdvancingRef.current = false
-            // Bonus XP for completion
+            // Bonus XP for completion — fire-and-forget
             if (user?.id) {
-              try {
-                const newXP = await addXP(user.id, 500, 'HUNT_COMPLETED')
-                setProfile((p: any) => p ? { ...p, total_xp: newXP } : p)
-                window.dispatchEvent(new Event('xp-updated'))
-              } catch(e) {}
+              addXP(user.id, 500, 'HUNT_COMPLETED')
+                .then(newXP => {
+                  setProfile((p: any) => p ? { ...p, total_xp: newXP } : p)
+                  window.dispatchEvent(new Event('xp-updated'))
+                })
+                .catch(() => {})
             }
           }, 200)
           return prev

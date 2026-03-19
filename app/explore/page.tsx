@@ -303,9 +303,7 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '0', minHeight: 'calc(100vh - 96px)' }}>
-        {/* ── LEFT PANEL ───────────────────────────────── */}
-        <div style={{ flex: '1 1 60%', padding: '20px', overflowY: 'auto', maxWidth: '100%' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
@@ -354,8 +352,8 @@ export default function ExplorePage() {
             ))}
           </div>
 
-          {/* Mobile map (shown above cards on mobile) */}
-          <div style={{ display: 'block', marginBottom: '16px' }} className="lg:hidden">
+          {/* Map */}
+          <div style={{ marginBottom: '16px' }}>
             <ExploreMap
               zones={TAJ_ZONES} currentZoneIndex={currentZoneIndex}
               completedZones={completedZones} userPos={userPos}
@@ -495,42 +493,6 @@ export default function ExplorePage() {
               )}
             </div>
           )}
-        </div>
-
-        {/* ── RIGHT PANEL (desktop map) ────────────── */}
-        <div className="hidden lg:block" style={{ flex: '0 0 40%', padding: '20px', position: 'sticky', top: 0, height: 'fit-content' }}>
-          <ExploreMap
-            zones={TAJ_ZONES} currentZoneIndex={currentZoneIndex}
-            completedZones={completedZones} userPos={userPos}
-            isCallActive={isCallActive} isSpeaking={isSpeaking}
-          />
-          {/* Zone list sidebar */}
-          <div style={{ marginTop: '16px' }}>
-            {TAJ_ZONES.map((z, i) => {
-              const isComplete = completedZones.includes(z.id)
-              const isCurrent = i === currentZoneIndex
-              return (
-                <div key={z.id} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '10px 12px', borderRadius: '10px', marginBottom: '6px',
-                  background: isCurrent ? 'rgba(201,168,76,0.1)' : 'transparent',
-                  border: isCurrent ? '1px solid rgba(201,168,76,0.3)' : '1px solid transparent',
-                  opacity: isComplete ? 0.7 : 1
-                }}>
-                  <span style={{ fontSize: '18px' }}>{isComplete ? '✅' : z.emoji}</span>
-                  <div>
-                    <div style={{ color: isComplete ? '#4B9B8E' : isCurrent ? '#C9A84C' : '#C4A882', fontSize: '13px', fontWeight: 600 }}>
-                      {z.name}
-                    </div>
-                    <div style={{ color: '#777', fontSize: '11px' }}>
-                      {isComplete ? `+${z.xp} XP earned` : `+${z.xp} XP`}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </div>
     </AppShell>
   )

@@ -72,6 +72,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
+  // Clear stale/expired Supabase tokens on every mount
+  // This fixes the "works in incognito but not normal tab" bug
+  useEffect(() => {
+    try {
+      const keys = Object.keys(localStorage)
+      keys.forEach(key => {
+        if (key.includes('supabase') || key.startsWith('sb-')) {
+          try {
+            const raw = localStorage.getItem(key)
+            if (!raw) return
+            const parsed = JSON.parse(raw)
+            
+            // Check if token is expired
+            const expiresAt = parsed?.expires_at 
+              || parsed?.session?.expires_at
+            
+            if (expiresAt) {
+              const expiry = typeof expiresAt === 'number' 
+                ? expiresAt 
+                : parseInt(expiresAt)
+              
+              // If expired more than 1 hour ago, clear it
+              if (expiry < (Date.now() / 1000) - 3600) {
+                localStorage.removeItem(key)
+                console.log('Cleared stale token:', key)
+              }
+            }
+          } catch(e) {}
+        }
+      })
+    } catch(e) {}
+  }, [])
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data } = await supabase
@@ -85,35 +118,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // CRITICAL: Initialize auth on mount — MUST resolve within 3 seconds or timeout
+  // CRITICAL: Initialize auth on mount — Force fresh session check
   useEffect(() => {
-    let resolved = false
+    const timeout = setTimeout(() => setLoading(false), 3000)
 
-    const timeoutPromise = new Promise<null>(resolve =>
-      setTimeout(() => resolve(null), 2500)
-    )
-    const sessionPromise = supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
-        if (error) {
-          supabase.auth.signOut().catch(() => {})
-          return null
+    // Force refresh the session from Supabase server
+    // This bypasses any stale cached tokens
+    supabase.auth.refreshSession()
+      .then(({ data: { session } }) => {
+        if (session?.user) {
+          setUser(session.user)
+          return fetchProfile(session.user.id)
         }
-        return session
+        // If refresh fails, fall back to getSession
+        return supabase.auth.getSession()
+          .then(({ data: { session: s } }) => {
+            setUser(s?.user ?? null)
+            if (s?.user) return fetchProfile(s.user.id)
+          })
       })
-      .catch(() => null)
-
-    Promise.race([sessionPromise, timeoutPromise]).then(session => {
-      if (resolved) return
-      resolved = true
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false))
-      } else {
+      .catch(() => {
+        // refreshSession failed — try getSession as fallback
+        supabase.auth.getSession()
+          .then(({ data: { session } }) => {
+            setUser(session?.user ?? null)
+            if (session?.user) fetchProfile(session.user.id)
+          })
+          .catch(() => {})
+      })
+      .finally(() => {
+        clearTimeout(timeout)
         setLoading(false)
-      }
-    })
+      })
 
-    // Handles login/logout/token refresh after initial load
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null)
@@ -126,14 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    return () => {
-      resolved = true // prevent late resolution from setting state
-      subscription.unsubscribe()
-      window.removeEventListener('focus', refetch)
-      window.removeEventListener('xp-updated', refetch)
-    }
-
-    async function refetch() {
+    const refetch = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         const { data } = await supabase
@@ -146,6 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener('focus', refetch)
     window.addEventListener('xp-updated', refetch)
+
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+      window.removeEventListener('focus', refetch)
+      window.removeEventListener('xp-updated', refetch)
+    }
   }, [])
 
   // Safe setProfile that supports functional updates

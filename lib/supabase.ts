@@ -1,10 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 
 export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 
     'https://huwqeyyjurnekqplwwmk.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    'sb_publishable_scP_9KxjtCDh26lqejHddA_CCyuSIRg'
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 
+    'sb_publishable_scP_9KxjtCDh26lqejHddA_CCyuSIRg',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'sanskriti-ai-auth',  // unique key prevents conflicts
+    }
+  }
 )
 
 

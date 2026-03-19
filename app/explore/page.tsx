@@ -8,7 +8,18 @@ import { useAuth } from "@/lib/authContext"
 import { addXP, computeAndSaveBadges } from "@/lib/authClient"
 import { useVapi } from "@/hooks/useVapi"
 
+import { ChevronDown } from "lucide-react"
+import { getMonument, saveMonument } from "@/lib/monumentStore"
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+const MONUMENT_NAMES: Record<string, string> = {
+  'taj-mahal': 'Taj Mahal', 'red-fort': 'Red Fort', 'qutub-minar': 'Qutub Minar',
+  'gateway-india': 'Gateway of India', 'hampi': 'Hampi', 'golden-temple': 'Golden Temple Amritsar',
+  'kedarnath': 'Kedarnath Temple', 'meenakshi': 'Meenakshi Amman Temple', 'mysore-palace': 'Mysore Palace',
+  'hawa-mahal': 'Hawa Mahal Jaipur', 'charminar': 'Charminar Hyderabad', 'victoria-memorial': 'Victoria Memorial Kolkata',
+  'ajanta': 'Ajanta Caves', 'konark': 'Konark Sun Temple', 'india-gate': 'India Gate Delhi',
+}
 
 // ── TAJ MAHAL ZONES ──────────────────────────────────────
 const TAJ_ZONES = [
@@ -42,6 +53,76 @@ const TAJ_ZONES = [
   }
 ]
 
+// ── RED FORT ZONES ──────────────────────────────────────
+const RED_FORT_ZONES = [
+  {
+    id: 11, name: "Lahori Gate", emoji: "🚪",
+    lat: 28.6558, lng: 77.2386, radius: 50, xp: 50,
+    arrival_fact: "You are standing at the Lahori Gate, the main entrance to the Red Fort. Its name comes from its orientation towards the city of Lahore. Every Independence Day, the Prime Minister hoists the national flag from here.",
+    direction_hint: "Walk straight towards the massive red sandstone gate.",
+    mini_fact: "Aurangzeb added the barbican (outer wall) to make it more secure."
+  },
+  {
+    id: 12, name: "Chatta Chowk", emoji: "🛍️",
+    lat: 28.6559, lng: 77.2393, radius: 45, xp: 75,
+    arrival_fact: "You have arrived at Chatta Chowk, the covered bazaar. Inspired by markets in Peshawar, Shah Jahan built this so the royal household could shop for silk, jewelry, and other exotic items without leaving the fort.",
+    direction_hint: "Pass through Lahori gate into the arched corridor lined with shops.",
+    mini_fact: "This is one of the very few covered markets from Mughal India."
+  },
+  {
+    id: 13, name: "Diwan-i-Am", emoji: "👑",
+    lat: 28.6561, lng: 77.2415, radius: 45, xp: 100,
+    arrival_fact: "This is the Diwan-i-Am, the Hall of Public Audience. Emperor Shah Jahan sat on the ornate marble canopy (jharokha) to hear the grievances of commoners, separated by silver railings.",
+    direction_hint: "Walk past the Naubat Khana to the large pillared red sandstone hall.",
+    mini_fact: "The hall originally had ivory-colored polish that looked like white marble."
+  },
+  {
+    id: 14, name: "Diwan-i-Khas", emoji: "💎",
+    lat: 28.6565, lng: 77.2428, radius: 50, xp: 125,
+    arrival_fact: "Welcome to the Diwan-i-Khas, the Hall of Private Audience. Here the Emperor met with VIPs. It once housed the legendary solid gold Peacock Throne, studded with precious gems including the Koh-i-Noor diamond.",
+    direction_hint: "Head further east towards the intricately carved white marble pavilion.",
+    mini_fact: "The Persian inscription here reads: 'If there is a paradise on earth, it is this'."
+  }
+]
+
+// ── QUTUB MINAR ZONES ──────────────────────────────────────
+const QUTUB_MINAR_ZONES = [
+  {
+    id: 21, name: "Qutub Minar Base", emoji: "🗼",
+    lat: 28.5244, lng: 77.1855, radius: 50, xp: 50,
+    arrival_fact: "You are looking up at the Qutub Minar, standing 72.5 meters tall. Built as a tower of victory by Qutb-ud-din Aibak in 1192, its five distinct stories feature intricate carvings and verses from the Quran.",
+    direction_hint: "Walk straight up to the towering fluted brick minaret.",
+    mini_fact: "It was struck by lightning multiple times and repaired by different rulers."
+  },
+  {
+    id: 22, name: "Iron Pillar", emoji: "⚔️",
+    lat: 28.5247, lng: 77.1849, radius: 40, xp: 75,
+    arrival_fact: "You are standing before the Iron Pillar of Delhi. Dating back to the 4th century, it has amazed scientists for decades because it has barely rusted despite being exposed to the elements for over a millennium.",
+    direction_hint: "Look for the metallic column standing in the center courtyard.",
+    mini_fact: "It is composed of 98% wrought iron, utilizing an ancient anti-corrosion technique."
+  },
+  {
+    id: 23, name: "Alai Darwaza", emoji: "🕌",
+    lat: 28.5242, lng: 77.1852, radius: 45, xp: 100,
+    arrival_fact: "You have reached the Alai Darwaza, the southern gateway of the Quwwat-ul-Islam Mosque built by Alauddin Khalji. It is considered a masterpiece of Indo-Islamic architecture, showcasing the first true dome and arches in India.",
+    direction_hint: "It is the large domed gateway structure immediately south of the minaret.",
+    mini_fact: "The gateway uses red sandstone alternating with white marble for a striking effect."
+  },
+  {
+    id: 24, name: "Alai Minar", emoji: "🏗️",
+    lat: 28.5256, lng: 77.1843, radius: 50, xp: 125,
+    arrival_fact: "This massive pile of rubble is the Alai Minar. Alauddin Khalji intended to build a tower exactly twice the height of the Qutub Minar, but work stopped after his death when it was only 24.5 meters high.",
+    direction_hint: "Walk to the northern side of the complex to find the wide, unfinished rubble base.",
+    mini_fact: "The core is 24.5 meters high and was never given its outer facing of carved stone."
+  }
+]
+
+const MONUMENT_ZONES: Record<string, typeof TAJ_ZONES> = {
+  'taj-mahal': TAJ_ZONES,
+  'red-fort': RED_FORT_ZONES,
+  'qutub-minar': QUTUB_MINAR_ZONES,
+}
+
 function getBearing(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
   const dLng = (to.lng - from.lng) * Math.PI / 180
   const lat1 = from.lat * Math.PI / 180
@@ -51,17 +132,25 @@ function getBearing(from: { lat: number; lng: number }, to: { lat: number; lng: 
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
 }
 
+// ── Per-monument starting user position (Explore) ────────
+const EXPLORE_USER_START: Record<string, { lat: number; lng: number }> = {
+  'taj-mahal':   { lat: 27.17300, lng: 78.04215 },
+  'red-fort':    { lat: 28.6545, lng: 77.2375 },
+  'qutub-minar': { lat: 28.5235, lng: 77.1845 },
+}
+
 // ── LEAFLET MAP (dynamic, no SSR) ────────────────────────
 const ExploreMap = dynamic(() => Promise.resolve(function ExploreMapInner({
-  zones, currentZoneIndex, completedZones, userPos, isCallActive, isSpeaking
+  zones, currentZoneIndex, completedZones, userPos, isCallActive, isSpeaking, monumentId
 }: {
   zones: typeof TAJ_ZONES; currentZoneIndex: number;
   completedZones: number[]; userPos: { lat: number; lng: number };
-  isCallActive: boolean; isSpeaking: boolean;
+  isCallActive: boolean; isSpeaking: boolean; monumentId: string;
 }) {
   const mapRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const markersRef = useRef<any[]>([])
+  const lastMonumentRef = useRef<string>('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -75,17 +164,31 @@ const ExploreMap = dynamic(() => Promise.resolve(function ExploreMapInner({
     const L = require('leaflet')
     if (!containerRef.current) return
 
+    // Destroy map if monument changed
+    if (mapRef.current && lastMonumentRef.current !== monumentId) {
+      mapRef.current.remove()
+      mapRef.current = null
+    }
+    lastMonumentRef.current = monumentId
+
+    // Use first zone as center
+    const centerLat = zones[0]?.lat ?? 27.17460
+    const centerLng = zones[0]?.lng ?? 78.04215
+
     if (mapRef.current) {
       markersRef.current.forEach(m => mapRef.current!.removeLayer(m))
       markersRef.current = []
     } else {
       mapRef.current = L.map(containerRef.current, {
-        center: [27.17460, 78.04215], zoom: 17,
+        center: [centerLat, centerLng], zoom: 17,
         zoomControl: false, attributionControl: false,
       })
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapRef.current)
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current)
     }
+    // Pan to current zone
+    const activeZone = zones[currentZoneIndex]
+    if (activeZone) mapRef.current.panTo([activeZone.lat, activeZone.lng])
 
     const map = mapRef.current!
     const newMarkers: any[] = []
@@ -144,7 +247,7 @@ const ExploreMap = dynamic(() => Promise.resolve(function ExploreMapInner({
     newMarkers.push(youLabel)
 
     markersRef.current = newMarkers
-  }, [zones, currentZoneIndex, completedZones, userPos, isCallActive, isSpeaking])
+  }, [zones, currentZoneIndex, completedZones, userPos, isCallActive, isSpeaking, monumentId])
 
   return (
     <div style={{ position: 'relative' }}>
@@ -178,11 +281,26 @@ export default function ExplorePage() {
   const [explorerComplete, setExplorerComplete] = useState(false)
   const [demoDistance, setDemoDistance] = useState(280)
   const [demoMode] = useState(true)
-  const [userPos, setUserPos] = useState({ lat: 27.17350, lng: 78.04215 })
+  const [userPos, setUserPos] = useState(() => EXPLORE_USER_START[getMonument()?.id || 'taj-mahal'] || EXPLORE_USER_START['taj-mahal'])
   const [isTTSSpeaking, setIsTTSSpeaking] = useState(false)
 
-  const zone = TAJ_ZONES[currentZoneIndex]
+  const [exploreMonumentId, setExploreMonumentId] = useState(getMonument()?.id || 'taj-mahal')
+  const [monumentSelected, setMonumentSelected] = useState(!!getMonument())
+  const [monumentsList, setMonumentsList] = useState<{id: string; name: string}[]>([])
+  
+  const activeZones = MONUMENT_ZONES[exploreMonumentId] || TAJ_ZONES
+
+  const zone = activeZones[currentZoneIndex]
   const bearing = getBearing(userPos, { lat: zone.lat, lng: zone.lng })
+
+  useEffect(() => {
+    // Fill the monument dropdown
+    setMonumentsList([
+      { id: 'taj-mahal', name: 'Taj Mahal' },
+      { id: 'red-fort', name: 'Red Fort' },
+      { id: 'qutub-minar', name: 'Qutub Minar' }
+    ])
+  }, [])
 
   // ── SPEAK FACT (browser TTS with voice selection) ────────
   const speakFact = useCallback((text: string) => {
@@ -209,7 +327,7 @@ export default function ExplorePage() {
   // ── DEMO: simulate walking toward zone ──────────────────
   useEffect(() => {
     if (!demoMode || arrivedAtZone) return
-    const z = TAJ_ZONES[currentZoneIndex]
+    const z = activeZones[currentZoneIndex]
     const interval = setInterval(() => {
       setDemoDistance(prev => {
         if (prev <= 15) { clearInterval(interval); return 0 }
@@ -230,7 +348,7 @@ export default function ExplorePage() {
     setShowFact(false)
     // Auto-narrate direction hint after short delay
     const timer = setTimeout(() => {
-      speakFact(TAJ_ZONES[currentZoneIndex].direction_hint)
+      speakFact(activeZones[currentZoneIndex].direction_hint)
     }, 1000)
     return () => { clearTimeout(timer); window.speechSynthesis?.cancel() }
   }, [currentZoneIndex, speakFact])
@@ -242,7 +360,7 @@ export default function ExplorePage() {
     setShowFact(true)
     setDemoDistance(0)
 
-    const z = TAJ_ZONES[currentZoneIndex]
+    const z = activeZones[currentZoneIndex]
 
     // Write XP to Supabase
     if (user) {
@@ -259,7 +377,7 @@ export default function ExplorePage() {
 
     // Auto-narrate the arrival fact
     if (isCallActive) {
-      sendZoneContext(z.name, z.arrival_fact, 'taj-mahal')
+      sendZoneContext(z.name, z.arrival_fact, exploreMonumentId)
     }
     speakFact(z.arrival_fact)
   }, [arrivedAtZone, currentZoneIndex, user, profile, isCallActive, sendZoneContext, setProfile, speakFact])
@@ -272,7 +390,7 @@ export default function ExplorePage() {
 
   // ── COMPLETION SCREEN ───────────────────────────────────
   if (explorerComplete) {
-    const totalXP = TAJ_ZONES.reduce((sum, z) => sum + z.xp, 0)
+    const totalXP = activeZones.reduce((sum, z) => sum + z.xp, 0)
     return (
       <AppShell>
         <style>{`@keyframes confetti { 0% { transform: translateY(-20px) scale(0.8); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }`}</style>
@@ -282,14 +400,14 @@ export default function ExplorePage() {
             Explorer Complete!
           </h1>
           <p style={{ color: '#F5E6D3', fontSize: '16px', marginBottom: '24px' }}>
-            You have explored all 4 historic zones of the Taj Mahal
+            You have explored all {activeZones.length} historic zones of the {MONUMENT_NAMES[exploreMonumentId] || 'Monument'}
           </p>
           <div style={{ fontSize: '48px', fontWeight: '700', color: '#C9A84C', marginBottom: '8px' }}>
             +{totalXP} XP
           </div>
           <p style={{ color: '#C4A882', marginBottom: '32px' }}>Total XP earned this exploration</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
-            {TAJ_ZONES.map(z => (
+            {activeZones.map(z => (
               <div key={z.id} style={{
                 background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)',
                 borderRadius: '20px', padding: '8px 16px', color: '#C9A84C', fontSize: '14px'
@@ -305,6 +423,43 @@ export default function ExplorePage() {
           }}>
             🏠 Back to Home
           </button>
+        </div>
+      </AppShell>
+    )
+  }
+
+  if (!monumentSelected) {
+    return (
+      <AppShell>
+        <div style={{ padding: 24, paddingBottom: 60 }}>
+          <h1 style={{ fontFamily: 'Georgia,serif', fontSize: 32, color: '#C9A84C', fontWeight: 700 }}>Monument Explorer</h1>
+          <div style={{
+            marginTop: 48, textAlign: 'center', background: 'rgba(28,22,56,0.9)',
+            border: '1px solid rgba(201,168,76,0.3)', borderRadius: 20, padding: 56,
+            maxWidth: 520, margin: '48px auto'
+          }}>
+            <div style={{ fontSize: 72, marginBottom: 16 }}>🧭</div>
+            <h2 style={{ color: '#C9A84C', fontFamily: 'Georgia,serif', fontSize: 26, margin: '0 0 12px' }}>Select a Monument</h2>
+            <p style={{ color: '#C4A882', fontSize: 16, marginBottom: 28, lineHeight: 1.6 }}>Choose a historic site to start your guided exploration.</p>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <select onChange={e => {
+                const id = e.target.value
+                const name = monumentsList.find(m => m.id === id)?.name || id
+                setExploreMonumentId(id); setMonumentSelected(true); saveMonument(id, name);
+                setCurrentZoneIndex(0); setCompletedZones([]); setXpEarned(0); setExplorerComplete(false); setArrivedAtZone(false);
+                const newStart = EXPLORE_USER_START[id] || EXPLORE_USER_START['taj-mahal']
+                setUserPos(newStart)
+              }} value={exploreMonumentId} style={{
+                padding: '12px 40px 12px 16px', background: 'rgba(28,22,56,0.9)',
+                border: '1px solid #C9A84C', color: '#C9A84C', borderRadius: 10,
+                fontSize: 16, cursor: 'pointer', minWidth: 260, marginBottom: 16, appearance: 'none' as const
+              }}>
+                <option value="" disabled>Choose a monument</option>
+                {monumentsList.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+              <ChevronDown style={{ position: 'absolute', right: 12, top: 14, width: 16, height: 16, color: '#C9A84C', pointerEvents: 'none' }} />
+            </div>
+          </div>
         </div>
       </AppShell>
     )
@@ -328,20 +483,20 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+  <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <h1 style={{ color: '#C9A84C', fontFamily: 'Georgia,serif', fontSize: '24px', margin: 0 }}>
-                🏛️ Taj Mahal Explorer
+                🏛️ {MONUMENT_NAMES[exploreMonumentId] || 'Monument'} Explorer
               </h1>
               <p style={{ color: '#C4A882', fontSize: '13px', margin: '4px 0 0' }}>
-                Zone {currentZoneIndex + 1} of {TAJ_ZONES.length}
+                Zone {currentZoneIndex + 1} of {activeZones.length}
               </p>
             </div>
             {/* Voice guide toggle */}
             {!isCallActive ? (
-              <button onClick={() => startCall('Taj Mahal Entrance', 'taj-mahal')} style={{
+              <button onClick={() => startCall(`${MONUMENT_NAMES[exploreMonumentId] || 'Monument'} Entrance`, exploreMonumentId)} style={{
                 background: 'linear-gradient(135deg,#C9A84C,#D4893F)', borderRadius: '12px',
                 padding: '10px 16px', color: '#0F0B1E', fontWeight: '700', fontSize: '13px',
                 border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
@@ -361,7 +516,7 @@ export default function ExplorePage() {
 
           {/* Breadcrumb */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
-            {TAJ_ZONES.map((z, i) => (
+            {activeZones.map((z, i) => (
               <div key={z.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{
                   width: 12, height: 12, borderRadius: '50%',
@@ -370,7 +525,7 @@ export default function ExplorePage() {
                   animation: i === currentZoneIndex ? 'pulse 1.5s infinite' : 'none',
                   border: i === currentZoneIndex ? '2px solid #C9A84C' : 'none'
                 }} />
-                {i < TAJ_ZONES.length - 1 && (
+                {i < activeZones.length - 1 && (
                   <div style={{ width: 24, height: 2, background: completedZones.includes(z.id) ? '#4B9B8E' : '#333' }} />
                 )}
               </div>
@@ -380,9 +535,10 @@ export default function ExplorePage() {
           {/* Map */}
           <div style={{ marginBottom: '16px' }}>
             <ExploreMap
-              zones={TAJ_ZONES} currentZoneIndex={currentZoneIndex}
+              zones={activeZones} currentZoneIndex={currentZoneIndex}
               completedZones={completedZones} userPos={userPos}
               isCallActive={isCallActive} isSpeaking={isSpeaking}
+              monumentId={exploreMonumentId}
             />
           </div>
 
@@ -396,7 +552,7 @@ export default function ExplorePage() {
                 {zone.emoji} {zone.name}
               </h2>
               <p style={{ color: '#C4A882', fontSize: '12px', marginBottom: '16px' }}>
-                Zone {currentZoneIndex + 1} of {TAJ_ZONES.length} • +{zone.xp} XP on arrival
+                Zone {currentZoneIndex + 1} of {activeZones.length} • +{zone.xp} XP on arrival
               </p>
 
               {/* Direction hint */}
@@ -522,7 +678,7 @@ export default function ExplorePage() {
               )}
 
               {/* Next zone or complete */}
-              {currentZoneIndex < TAJ_ZONES.length - 1 ? (
+              {currentZoneIndex < activeZones.length - 1 ? (
                 <button
                   onClick={() => {
                     window.speechSynthesis?.cancel()
@@ -534,7 +690,7 @@ export default function ExplorePage() {
                     border: 'none', cursor: 'pointer', width: '100%'
                   }}
                 >
-                  Next Zone: {TAJ_ZONES[currentZoneIndex + 1].emoji} {TAJ_ZONES[currentZoneIndex + 1].name} →
+                  Next Zone: {activeZones[currentZoneIndex + 1].emoji} {activeZones[currentZoneIndex + 1].name} →
                 </button>
               ) : (
                 <button

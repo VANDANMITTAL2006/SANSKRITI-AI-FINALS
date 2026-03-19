@@ -94,36 +94,139 @@ const TAJ_MAHAL_RIDDLES = [
   }
 ]
 
-// ─── Synthetic Players ───
-const SYNTHETIC_PLAYERS = [
+// ─── Red Fort Predefined Riddles ───
+const RED_FORT_RIDDLES = [
   {
-    id: "player_priya", name: "Priya", color: "#FF6B9D", avatar: "👩",
-    positions: [
-      { lat: 27.17455, lng: 78.04190 },
-      { lat: 27.17462, lng: 78.04178 },
-      { lat: 27.17471, lng: 78.04182 },
-    ],
-    clueInterval: 45000,
+    id: 11,
+    riddle: "I am the mighty entrance where the flag flies high on Independence Day. My red sandstone towers have watched empires fall and republics rise.",
+    location_name: "Lahori Gate",
+    hint: "Walk to the main western entrance of the fort",
+    target_lat: 28.6558, target_lng: 77.2386, radius_meters: 50,
+    xp_rewards: { first: 50, second: 30, third: 20 }
   },
   {
-    id: "player_arjun", name: "Arjun", color: "#4ECDC4", avatar: "👨",
-    positions: [
-      { lat: 27.17520, lng: 78.04240 },
-      { lat: 27.17510, lng: 78.04225 },
-      { lat: 27.17505, lng: 78.04218 },
-    ],
-    clueInterval: 75000,
+    id: 12,
+    riddle: "Once a covered bazaar where royal ladies shopped for silks and jewels, today I still bustle with merchants under my vaulted roof.",
+    location_name: "Chatta Chowk",
+    hint: "The covered bazaar immediately after entering Lahori Gate",
+    target_lat: 28.6559, target_lng: 77.2393, radius_meters: 60,
+    xp_rewards: { first: 50, second: 30, third: 20 }
   },
   {
-    id: "player_diya", name: "Diya", color: "#FFE66D", avatar: "👧",
-    positions: [
-      { lat: 27.17440, lng: 78.04260 },
-      { lat: 27.17450, lng: 78.04245 },
-      { lat: 27.17460, lng: 78.04230 },
-    ],
-    clueInterval: 60000,
+    id: 13,
+    riddle: "Here musicians once played the naubat (kettledrum) five times a day. Only princes of royal blood could ride their elephants past my gates.",
+    location_name: "Naubat Khana",
+    hint: "The Drum House located east of Chatta Chowk",
+    target_lat: 28.6560, target_lng: 77.2405, radius_meters: 50,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 14,
+    riddle: "I am the Hall of Public Audience. Emperor Shah Jahan sat on my marble canopy, listening to the pleas of commoners.",
+    location_name: "Diwan-i-Am",
+    hint: "The large pillared hall just past the Naubat Khana",
+    target_lat: 28.6561, target_lng: 77.2415, radius_meters: 60,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 15,
+    riddle: "If there is paradise on earth, it is here. I once housed the legendary Peacock Throne before it was stolen away.",
+    location_name: "Diwan-i-Khas",
+    hint: "The marble Hall of Private Audience closer to the riverbed",
+    target_lat: 28.6565, target_lng: 77.2428, radius_meters: 50,
+    xp_rewards: { first: 50, second: 30, third: 20 }
   }
 ]
+
+// ─── Qutub Minar Predefined Riddles ───
+const QUTUB_MINAR_RIDDLES = [
+  {
+    id: 21,
+    riddle: "I am the tallest brick minaret in the world, soaring over 72 meters into the sky. I was built as a victory tower centuries ago.",
+    location_name: "Qutub Minar Base",
+    hint: "Walk to the base of the massive victory tower",
+    target_lat: 28.5244, target_lng: 77.1855, radius_meters: 60,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 22,
+    riddle: "I have stood here for over 1,600 years without rusting. Local legend says if you can wrap your arms around me backward, your wish comes true.",
+    location_name: "The Iron Pillar",
+    hint: "Find the ancient metallic pillar standing in the courtyard",
+    target_lat: 28.5247, target_lng: 77.1849, radius_meters: 40,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 23,
+    riddle: "I am the magnificent southern gateway, added by Alauddin Khalji. My red sandstone and white marble arches are considered masterpieces of Islamic art.",
+    location_name: "Alai Darwaza",
+    hint: "The impressive domed gateway on the south side",
+    target_lat: 28.5242, target_lng: 77.1852, radius_meters: 40,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 24,
+    riddle: "I was meant to be twice as high as my famous neighbor, but the ambitious sultan who started me died, leaving me as an unfinished dream of stone.",
+    location_name: "Alai Minar",
+    hint: "The large, unfinished rubble tower to the north",
+    target_lat: 28.5256, target_lng: 77.1843, radius_meters: 60,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  },
+  {
+    id: 25,
+    riddle: "I am the final resting place of Delhi's second sultan. Look up inside me, and instead of a dome, you'll see the open sky above my intricately carved walls.",
+    location_name: "Tomb of Iltutmish",
+    hint: "The square tomb structure located to the northwest of the mosque",
+    target_lat: 28.5251, target_lng: 77.1844, radius_meters: 40,
+    xp_rewards: { first: 50, second: 30, third: 20 }
+  }
+]
+
+const MONUMENT_RIDDLES: Record<string, typeof TAJ_MAHAL_RIDDLES> = {
+  'taj-mahal': TAJ_MAHAL_RIDDLES,
+  'red-fort': RED_FORT_RIDDLES,
+  'qutub-minar': QUTUB_MINAR_RIDDLES,
+}
+
+// ─── Per-monument synthetic player offsets ───
+const MONUMENT_PLAYER_OFFSETS: Record<string, { name: string; color: string; avatar: string; offsets: [number, number][] }[]> = {
+  'taj-mahal': [
+    { name: 'Priya', color: '#FF6B9D', avatar: '👩', offsets: [[-0.0006, -0.0003], [-0.0005, -0.0004], [-0.0004, -0.0003]] },
+    { name: 'Arjun', color: '#4ECDC4', avatar: '👨', offsets: [[0.0002, 0.0002], [0.0001, 0.0001], [0.0000, 0.0000]] },
+    { name: 'Diya',  color: '#FFE66D', avatar: '👧', offsets: [[-0.0008, 0.0005], [-0.0007, 0.0003], [-0.0005, 0.0001]] },
+  ],
+  'red-fort': [
+    { name: 'Priya', color: '#FF6B9D', avatar: '👩', offsets: [[-0.0005, -0.0003], [-0.0004, -0.0002], [-0.0003, -0.0001]] },
+    { name: 'Arjun', color: '#4ECDC4', avatar: '👨', offsets: [[0.0003, 0.0003], [0.0002, 0.0002], [0.0001, 0.0001]] },
+    { name: 'Diya',  color: '#FFE66D', avatar: '👧', offsets: [[-0.0006, 0.0004], [-0.0005, 0.0002], [-0.0004, 0.0001]] },
+  ],
+  'qutub-minar': [
+    { name: 'Priya', color: '#FF6B9D', avatar: '👩', offsets: [[-0.0004, -0.0003], [-0.0003, -0.0002], [-0.0002, -0.0001]] },
+    { name: 'Arjun', color: '#4ECDC4', avatar: '👨', offsets: [[0.0002, 0.0002], [0.0001, 0.0001], [0.0000, 0.0000]] },
+    { name: 'Diya',  color: '#FFE66D', avatar: '👧', offsets: [[-0.0005, 0.0004], [-0.0004, 0.0002], [-0.0003, 0.0001]] },
+  ],
+}
+
+// Generate player states anchored to first riddle of the monument
+function makePlayers(monumentId: string, riddles: typeof TAJ_MAHAL_RIDDLES): PlayerState[] {
+  const offsets = MONUMENT_PLAYER_OFFSETS[monumentId] || MONUMENT_PLAYER_OFFSETS['taj-mahal']
+  const anchor = riddles[0]
+  return offsets.map((p, i) => ({
+    id: `player_${i}`, name: p.name, color: p.color, avatar: p.avatar,
+    lat: anchor.target_lat + p.offsets[0][0],
+    lng: anchor.target_lng + p.offsets[0][1],
+    prevLat: anchor.target_lat + p.offsets[0][0],
+    prevLng: anchor.target_lng + p.offsets[0][1],
+    cluesCompleted: 0, xp: 0, posIndex: 0,
+  }))
+}
+
+// Per-monument starting GPS for the user (demo mode)
+const MONUMENT_USER_START: Record<string, { lat: number; lng: number }> = {
+  'taj-mahal':   { lat: 27.17300, lng: 78.04215 },
+  'red-fort':    { lat: 28.6545, lng: 77.2375 },
+  'qutub-minar': { lat: 28.5235, lng: 77.1845 },
+}
 
 type GeoStatus = 'idle' | 'checking' | 'inside' | 'outside' | 'error'
 
@@ -136,15 +239,16 @@ interface PlayerState {
 // ─── Leaflet Map Component (dynamically imported, no SSR) ───
 const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
   riddles, activeClueIdx, completedClues, userLat, userLng,
-  players, demoMode,
+  players, demoMode, monumentId,
 }: {
   riddles: typeof TAJ_MAHAL_RIDDLES; activeClueIdx: number;
   completedClues: Set<number>; userLat: number; userLng: number;
-  players: PlayerState[]; demoMode: boolean;
+  players: PlayerState[]; demoMode: boolean; monumentId: string;
 }) {
   const mapRef = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const markersRef = useRef<L.Layer[]>([])
+  const lastMonumentRef = useRef<string>('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -159,13 +263,25 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
     const L = require('leaflet')
 
     if (!containerRef.current) return
+    
+    // If monument changed, destroy and recreate the map
+    if (mapRef.current && lastMonumentRef.current !== monumentId) {
+      mapRef.current.remove()
+      mapRef.current = null
+    }
+    lastMonumentRef.current = monumentId
+    
+    // Compute map center from first riddle
+    const centerLat = riddles[0]?.target_lat ?? 27.17490
+    const centerLng = riddles[0]?.target_lng ?? 78.04215
+
     if (mapRef.current) {
       // Update existing map
       markersRef.current.forEach(m => mapRef.current!.removeLayer(m))
       markersRef.current = []
     } else {
       mapRef.current = L.map(containerRef.current, {
-        center: [27.17490, 78.04215],
+        center: [centerLat, centerLng],
         zoom: 17,
         zoomControl: false,
         attributionControl: false,
@@ -175,6 +291,8 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
       }).addTo(mapRef.current)
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current)
     }
+    // Pan to new center when active clue changes
+    mapRef.current.panTo([riddles[activeClueIdx]?.target_lat ?? centerLat, riddles[activeClueIdx]?.target_lng ?? centerLng])
 
     const map = mapRef.current!
     const newMarkers: L.Layer[] = []
@@ -260,7 +378,7 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
 
     return () => {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeClueIdx, completedClues.size, userLat, userLng, players, demoMode])
+  }, [activeClueIdx, completedClues.size, userLat, userLng, players, demoMode, monumentId])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -324,18 +442,12 @@ export default function HuntPage() {
   const [clueCompletions, setClueCompletions] = useState<Record<number, string[]>>({})
 
   // ─── User GPS ───
-  const [userLat, setUserLat] = useState(27.17480)
-  const [userLng, setUserLng] = useState(78.04200)
+  const [userLat, setUserLat] = useState(() => (MONUMENT_USER_START[lastMonument?.id || 'taj-mahal'] || MONUMENT_USER_START['taj-mahal']).lat)
+  const [userLng, setUserLng] = useState(() => (MONUMENT_USER_START[lastMonument?.id || 'taj-mahal'] || MONUMENT_USER_START['taj-mahal']).lng)
 
   // ─── Synthetic players ───
-  const [playerStates, setPlayerStates] = useState<PlayerState[]>(
-    SYNTHETIC_PLAYERS.map(p => ({
-      id: p.id, name: p.name, color: p.color, avatar: p.avatar,
-      lat: p.positions[0].lat, lng: p.positions[0].lng,
-      prevLat: p.positions[0].lat, prevLng: p.positions[0].lng,
-      cluesCompleted: 0, xp: 0, posIndex: 0,
-    }))
-  )
+  const initRiddles = MONUMENT_RIDDLES[lastMonument?.id || 'taj-mahal'] || TAJ_MAHAL_RIDDLES
+  const [playerStates, setPlayerStates] = useState<PlayerState[]>(() => makePlayers(lastMonument?.id || 'taj-mahal', initRiddles))
 
   // ─── Leaderboard ───
   const [showLeaderboard, setShowLeaderboard] = useState(false)
@@ -345,7 +457,8 @@ export default function HuntPage() {
   const [celebrateMedal, setCelebrateMedal] = useState('')
 
   const monumentName = MONUMENT_NAMES[huntMonumentId] || huntMonumentId
-  const activeRiddle = TAJ_MAHAL_RIDDLES[activeClueIdx]
+  const activeRiddles = MONUMENT_RIDDLES[huntMonumentId] || TAJ_MAHAL_RIDDLES
+  const activeRiddle = activeRiddles[activeClueIdx]
 
   // ─── Load monument list ───
   useEffect(() => {
@@ -384,10 +497,10 @@ export default function HuntPage() {
 
   // Auto-start hunt when geo is inside or demo
   useEffect(() => {
-    if (monumentSelected && (geoStatus === 'inside' || demoMode) && huntMonumentId === 'taj-mahal') {
+    if (monumentSelected && (geoStatus === 'inside' || demoMode) && activeRiddles) {
       setHuntStarted(true)
     }
-  }, [monumentSelected, geoStatus, demoMode, huntMonumentId])
+  }, [monumentSelected, geoStatus, demoMode, huntMonumentId, activeRiddles])
 
   // ─── GPS tracking ───
   useEffect(() => {
@@ -427,7 +540,7 @@ export default function HuntPage() {
         setPlayerStates(prev => prev.map(p => {
           if (p.id !== sp.id || p.cluesCompleted >= 5) return p
           const newCompleted = p.cluesCompleted + 1
-          const clueId = TAJ_MAHAL_RIDDLES[p.cluesCompleted]?.id
+          const clueId = activeRiddles[p.cluesCompleted]?.id
           if (clueId) {
             setClueCompletions(cc => {
               const arr = cc[clueId] || []
@@ -525,7 +638,7 @@ export default function HuntPage() {
       setLocationVerified(false)
       setShowHint(false)
 
-      if (activeClueIdx < TAJ_MAHAL_RIDDLES.length - 1) {
+      if (activeClueIdx < activeRiddles.length - 1) {
         setActiveClueIdx(prev => prev + 1)
       } else {
         // Hunt completed!
@@ -581,9 +694,14 @@ export default function HuntPage() {
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <select onChange={e => {
                 const id = e.target.value
+                const newRiddles = MONUMENT_RIDDLES[id] || TAJ_MAHAL_RIDDLES
+                const start = MONUMENT_USER_START[id] || MONUMENT_USER_START['taj-mahal']
                 const name = monumentList.find(m => m.id === id)?.name || id
                 setHuntMonumentId(id); setMonumentSelected(true); saveMonument(id, name)
-              }} defaultValue="" style={{
+                setActiveClueIdx(0); setCompletedClues(new Set()); setXpEarned(0); setHuntCompleted(false);
+                setPlayerStates(makePlayers(id, newRiddles))
+                setUserLat(start.lat); setUserLng(start.lng)
+              }} value={huntMonumentId} style={{
                 padding: '12px 40px 12px 16px', background: 'rgba(28,22,56,0.9)',
                 border: '1px solid #C9A84C', color: '#C9A84C', borderRadius: 10,
                 fontSize: 16, cursor: 'pointer', minWidth: 260, marginBottom: 16, appearance: 'none' as const
@@ -593,7 +711,9 @@ export default function HuntPage() {
               </select>
               <ChevronDown style={{ position: 'absolute', right: 12, top: 14, width: 16, height: 16, color: '#C9A84C', pointerEvents: 'none' }} />
             </div>
-            <div style={{ color: '#7A6E5C', fontSize: 13, marginTop: 8 }}>Note: Treasure hunt currently available for Taj Mahal</div>
+            {!MONUMENT_RIDDLES[huntMonumentId] && huntMonumentId !== 'taj-mahal' && (
+              <div style={{ color: '#7A6E5C', fontSize: 13, marginTop: 8 }}>Note: Treasure hunt not yet available for this monument. Try Taj Mahal, Red Fort or Qutub Minar.</div>
+            )}
           </div>
         </div>
       </AppShell>
@@ -741,14 +861,14 @@ export default function HuntPage() {
                 {t('treasure_hunt')}
               </h1>
               <div className="flex items-center gap-2 md:gap-3">
-                <span className="text-[#F5E6D3] text-sm md:text-base font-semibold">Clue {activeClueIdx + 1} of {TAJ_MAHAL_RIDDLES.length}</span>
+                <span className="text-[#F5E6D3] text-sm md:text-base font-semibold">Clue {activeClueIdx + 1} of {activeRiddles.length}</span>
                 <span className="px-3 py-1.5 bg-[#C9A84C]/15 rounded-full text-[#C9A84C] text-[11px] md:text-[13px] font-bold">⚡ {xpEarned} XP</span>
               </div>
             </div>
 
             {/* Progress dots */}
             <div style={{ display: 'flex', gap: 6 }}>
-              {TAJ_MAHAL_RIDDLES.map((r, idx) => (
+              {activeRiddles.map((r, idx) => (
                 <div key={r.id} style={{
                   flex: 1, height: 4, borderRadius: 2,
                   background: completedClues.has(r.id) ? '#4B9B8E' : idx === activeClueIdx ? '#C9A84C' : 'rgba(201,168,76,0.15)',
@@ -867,13 +987,14 @@ export default function HuntPage() {
             {/* Map container */}
             <div className="w-full h-[200px] md:h-full md:min-h-[500px] rounded-xl overflow-hidden border border-[#C9A84C]/20 bg-[#1C1638]/90 relative z-0">
               <HuntMap
-                riddles={TAJ_MAHAL_RIDDLES}
+                riddles={activeRiddles}
                 activeClueIdx={activeClueIdx}
                 completedClues={completedClues}
                 userLat={userLat}
                 userLng={userLng}
                 players={playerStates}
                 demoMode={demoMode}
+                monumentId={huntMonumentId}
               />
             </div>
 

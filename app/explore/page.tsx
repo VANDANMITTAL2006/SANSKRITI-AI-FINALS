@@ -179,6 +179,7 @@ export default function ExplorePage() {
   const [demoDistance, setDemoDistance] = useState(280)
   const [demoMode] = useState(true)
   const [userPos, setUserPos] = useState({ lat: 27.17350, lng: 78.04215 })
+  const [isTTSSpeaking, setIsTTSSpeaking] = useState(false)
 
   const zone = TAJ_ZONES[currentZoneIndex]
   const bearing = getBearing(userPos, { lat: zone.lat, lng: zone.lng })
@@ -231,19 +232,27 @@ export default function ExplorePage() {
     } else {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel()
+        setIsTTSSpeaking(true)
         const sentences = z.arrival_fact.match(/[^.!?]+[.!?]+/g) || [z.arrival_fact]
         let idx = 0
         const speakNext = () => {
-          if (idx >= sentences.length) return
+          if (idx >= sentences.length) { setIsTTSSpeaking(false); return }
           const u = new SpeechSynthesisUtterance(sentences[idx].trim())
           u.lang = 'en-US'; u.rate = 0.88
           u.onend = () => { idx++; speakNext() }
+          u.onerror = () => setIsTTSSpeaking(false)
           window.speechSynthesis.speak(u)
         }
         speakNext()
       }
     }
   }, [arrivedAtZone, currentZoneIndex, user, isCallActive, sendZoneContext, setProfile])
+
+  const stopNarration = useCallback(() => {
+    window.speechSynthesis?.cancel()
+    setIsTTSSpeaking(false)
+    if (isCallActive) endCall()
+  }, [isCallActive, endCall])
 
   // ── COMPLETION SCREEN ───────────────────────────────────
   if (explorerComplete) {
@@ -459,11 +468,23 @@ export default function ExplorePage() {
                 💡 {zone.mini_fact}
               </div>
 
-              {/* Vapi speaking indicator */}
-              {isSpeaking && (
-                <div style={{ color: '#C9A84C', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: 'pulse 1s infinite' }} />
-                  AI Guide is narrating...
+              {/* Speaking indicator + stop button */}
+              {(isSpeaking || isTTSSpeaking) && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ color: '#C9A84C', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: 'pulse 1s infinite' }} />
+                    AI Guide is narrating...
+                  </div>
+                  <button
+                    onClick={stopNarration}
+                    style={{
+                      background: 'rgba(220,38,38,0.2)', border: '1px solid rgba(220,38,38,0.5)',
+                      borderRadius: '8px', padding: '6px 14px', color: '#f87171',
+                      fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    ⏹️ Stop
+                  </button>
                 </div>
               )}
 

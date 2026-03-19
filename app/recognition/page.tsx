@@ -73,57 +73,72 @@ export default function RecognitionPage() {
     setResult(null)
     setFileName(file.name)
 
+    // Show preview immediately
     const previewReader = new FileReader()
     previewReader.onload = (e) => {
       if (e.target?.result) setImagePreview(e.target.result as string)
     }
     previewReader.readAsDataURL(file)
 
-    const b64Reader = new FileReader()
-    b64Reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string
-      const base64 = dataUrl.split(',')[1]
-      try {
-        const res = await api.recognize(base64, file.name)
-        setResult(res.data)
-
-        if (
-          res.data.monument_name &&
-          res.data.monument_name !== 'Unknown' &&
-          res.data.monument_name !== null &&
-          res.data.monument_name !== ''
-        ) {
-          try {
-            if (user) {
-              const newXP = await addXP(user.id, 25, 'MONUMENT_VISIT')
-              setProfile((prev: Record<string, unknown> | null) => prev ? { ...prev, total_xp: newXP } : prev)
-              await addMonumentVisited(user.id, res.data.monument_name)
-              window.dispatchEvent(new Event('xp-updated'))
-              const updatedProfile = { ...profile, total_xp: newXP, monuments_visited: [...(profile?.monuments_visited || []), res.data.monument_name] }
-              await computeAndSaveBadges(user.id, updatedProfile)
-            }
-          } catch (err) { console.warn('XP award failed:', err) }
-
-          saveMonument(
-            monumentNameToId(res.data.monument_name),
-            res.data.monument_name
-          )
-
-          showToast('⚡ +25 XP for identifying ' + res.data.monument_name + '!')
-        } else {
-          showToast('Monument identified! 🏛️')
+    // Compress image before sending (max 800px, 70% quality → ~100-200KB vs 3-5MB raw)
+    const compressImage = (f: File): Promise<string> => new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 800
+        let w = img.width, h = img.height
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+          else { w = Math.round(w * MAX / h); h = MAX }
         }
-      } catch {
-        setResult({
-          monument_name: 'Unknown',
-          is_unknown: true,
-          brief_description: 'Could not identify. Try a clearer image.'
-        })
-      } finally {
-        setLoading(false)
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+        resolve(dataUrl.split(',')[1])
       }
+      img.src = URL.createObjectURL(f)
+    })
+
+    try {
+      const base64 = await compressImage(file)
+      const res = await api.recognize(base64, file.name)
+      setResult(res.data)
+
+      if (
+        res.data.monument_name &&
+        res.data.monument_name !== 'Unknown' &&
+        res.data.monument_name !== null &&
+        res.data.monument_name !== ''
+      ) {
+        try {
+          if (user) {
+            const newXP = await addXP(user.id, 25, 'MONUMENT_VISIT')
+            setProfile((prev: Record<string, unknown> | null) => prev ? { ...prev, total_xp: newXP } : prev)
+            await addMonumentVisited(user.id, res.data.monument_name)
+            window.dispatchEvent(new Event('xp-updated'))
+            const updatedProfile = { ...profile, total_xp: newXP, monuments_visited: [...(profile?.monuments_visited || []), res.data.monument_name] }
+            await computeAndSaveBadges(user.id, updatedProfile)
+          }
+        } catch (err) { console.warn('XP award failed:', err) }
+
+        saveMonument(
+          monumentNameToId(res.data.monument_name),
+          res.data.monument_name
+        )
+
+        showToast('⚡ +25 XP for identifying ' + res.data.monument_name + '!')
+      } else {
+        showToast('Monument identified! 🏛️')
+      }
+    } catch {
+      setResult({
+        monument_name: 'Unknown',
+        is_unknown: true,
+        brief_description: 'Could not identify. Try a clearer image.'
+      })
+    } finally {
+      setLoading(false)
     }
-    b64Reader.readAsDataURL(file)
   }
 
   const startCamera = async () => {

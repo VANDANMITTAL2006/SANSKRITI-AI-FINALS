@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { AppShell } from "@/components/app-shell"
-import { MapPin, Trophy, ChevronDown, Eye, EyeOff } from "lucide-react"
+import { MapPin, Trophy, ChevronDown, Eye, EyeOff, Crosshair, Lightbulb, Volume2 } from "lucide-react"
 import api from "@/lib/apiClient"
 import { Toast, useToast } from "@/components/Toast"
 import { useLang } from "@/lib/languageContext"
@@ -21,6 +21,13 @@ function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2)
   return R * 2 * Math.asin(Math.sqrt(a))
+}
+
+function scaleCoordinates(lat: number, lng: number, centerLat: number, centerLng: number, factor = 1.32) {
+  return {
+    lat: centerLat + (lat - centerLat) * factor,
+    lng: centerLng + (lng - centerLng) * factor,
+  }
 }
 
 // ─── Monument GPS coordinates ───
@@ -291,7 +298,7 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
     } else {
       mapRef.current = L.map(containerRef.current, {
         center: [centerLat, centerLng],
-        zoom: 17,
+        zoom: 16.5,
         zoomControl: false,
         attributionControl: false,
       })
@@ -303,10 +310,32 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
       setTimeout(() => { mapRef.current?.invalidateSize() }, 200)
     }
     // Pan to new center when active clue changes
-    mapRef.current?.panTo([riddles[activeClueIdx]?.target_lat ?? centerLat, riddles[activeClueIdx]?.target_lng ?? centerLng])
+    const toScaled = (lat: number, lng: number) => scaleCoordinates(lat, lng, centerLat, centerLng)
+    const scaledActive = toScaled(
+      riddles[activeClueIdx]?.target_lat ?? centerLat,
+      riddles[activeClueIdx]?.target_lng ?? centerLng,
+    )
+
+    mapRef.current?.flyTo(
+      [scaledActive.lat, scaledActive.lng],
+      17,
+      { duration: 0.65 }
+    )
 
     const map = mapRef.current!
     const newMarkers: L.Layer[] = []
+
+    const routePoints = riddles.map(r => {
+      const scaled = toScaled(r.target_lat, r.target_lng)
+      return [scaled.lat, scaled.lng]
+    })
+    const routeLine = L.polyline(routePoints as [number, number][], {
+      color: '#C9A84C',
+      weight: 3,
+      dashArray: '8 10',
+      opacity: 0.7,
+    }).addTo(map)
+    newMarkers.push(routeLine)
 
     // Riddle target markers
     riddles.forEach((r, idx) => {
@@ -315,28 +344,30 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
       const isFuture = idx > activeClueIdx && !isCompleted
 
       let markerColor = '#555'
-      let markerRadius = 6
+      let markerRadius = 9
       let markerOpacity = 0.5
       let fillColor = '#555'
 
       if (isActive) {
         markerColor = '#C9A84C'
         fillColor = '#C9A84C'
-        markerRadius = 10
+        markerRadius = 14
         markerOpacity = 0.9
       } else if (isCompleted) {
         markerColor = '#4B9B8E'
         fillColor = '#4B9B8E'
-        markerRadius = 7
+        markerRadius = 11
         markerOpacity = 0.8
       } else if (isFuture) {
         markerColor = '#666'
         fillColor = '#444'
-        markerRadius = 5
+        markerRadius = 8
         markerOpacity = 0.4
       }
 
-      const cm = L.circleMarker([r.target_lat, r.target_lng], {
+      const scaled = toScaled(r.target_lat, r.target_lng)
+
+      const cm = L.circleMarker([scaled.lat, scaled.lng], {
         radius: markerRadius,
         fillColor, color: markerColor,
         fillOpacity: markerOpacity, weight: 2, opacity: 1,
@@ -347,8 +378,8 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
 
       // Active clue pulsing ring
       if (isActive) {
-        const pulse = L.circleMarker([r.target_lat, r.target_lng], {
-          radius: 18, fillColor: '#C9A84C', color: '#C9A84C',
+        const pulse = L.circleMarker([scaled.lat, scaled.lng], {
+          radius: 24, fillColor: '#C9A84C', color: '#C9A84C',
           fillOpacity: 0.15, weight: 1, opacity: 0.4,
         }).addTo(map)
         newMarkers.push(pulse)
@@ -358,26 +389,30 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
     })
 
     // User marker
+    const scaledUser = toScaled(userLat, userLng)
     const userMarker = L.circleMarker([userLat, userLng], {
-      radius: 8, fillColor: '#FFFFFF', color: '#C9A84C',
+      radius: 10, fillColor: '#FFFFFF', color: '#C9A84C',
       fillOpacity: 1, weight: 3, opacity: 1,
     }).addTo(map)
     userMarker.bindPopup('<div style="font-size:12px;font-weight:700;color:#C9A84C">📍 You</div>')
+    userMarker.setLatLng([scaledUser.lat, scaledUser.lng])
     newMarkers.push(userMarker)
 
     // Synthetic player markers
     if (demoMode) {
       players.forEach(p => {
+        const scaledPrev = toScaled(p.prevLat, p.prevLng)
+        const scaledCurrent = toScaled(p.lat, p.lng)
         // Trail dot (previous position)
-        const trail = L.circleMarker([p.prevLat, p.prevLng], {
+        const trail = L.circleMarker([scaledPrev.lat, scaledPrev.lng], {
           radius: 3, fillColor: p.color, color: p.color,
           fillOpacity: 0.3, weight: 0, opacity: 0.3,
         }).addTo(map)
         newMarkers.push(trail)
 
         // Current position
-        const pm = L.circleMarker([p.lat, p.lng], {
-          radius: 7, fillColor: p.color, color: '#fff',
+        const pm = L.circleMarker([scaledCurrent.lat, scaledCurrent.lng], {
+          radius: 9, fillColor: p.color, color: '#fff',
           fillOpacity: 0.9, weight: 2, opacity: 1,
         }).addTo(map)
         pm.bindPopup(`<div style="font-size:12px;font-weight:600">${p.avatar} ${p.name} — Clue ${Math.min(p.cluesCompleted + 1, 5)}</div>`)
@@ -406,8 +441,8 @@ const HuntMap = dynamic(() => Promise.resolve(function HuntMapInner({
     }
   }, [])
 
-  return <div ref={containerRef} style={{ width: '100%', height: '460px', borderRadius: 14, overflow: 'hidden' }} />
-}), { ssr: false, loading: () => <div style={{ width: '100%', height: '460px', background: 'rgba(28,22,56,0.9)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C4A882', fontSize: 13 }}>Loading map...</div> })
+  return <div ref={containerRef} style={{ width: '100%', height: '68vh', minHeight: '520px', borderRadius: 16, overflow: 'hidden' }} />
+}), { ssr: false, loading: () => <div style={{ width: '100%', height: '68vh', minHeight: '520px', background: 'rgba(28,22,56,0.9)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C4A882', fontSize: 13 }}>Loading map...</div> })
 
 // ─── Loading Spinner ───
 function LoadingSpinner({ text }: { text?: string }) {
@@ -482,6 +517,21 @@ export default function HuntPage() {
   const monumentName = MONUMENT_NAMES[huntMonumentId] || huntMonumentId
   const activeRiddles = MONUMENT_RIDDLES[huntMonumentId] || TAJ_MAHAL_RIDDLES
   const activeRiddle = activeRiddles[activeClueIdx]
+
+  const speakCurrentClue = useCallback(() => {
+    if (!activeRiddle || typeof window === 'undefined' || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(activeRiddle.riddle)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.92
+    window.speechSynthesis.speak(utterance)
+  }, [activeRiddle])
+
+  const recenterOnActiveClue = useCallback(() => {
+    if (!activeRiddle) return
+    setUserLat(activeRiddle.target_lat - 0.00008)
+    setUserLng(activeRiddle.target_lng - 0.00008)
+  }, [activeRiddle])
 
   // ─── Monument list — only the 3 demo-ready ones ───
   useEffect(() => {
@@ -826,13 +876,13 @@ export default function HuntPage() {
         @keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}70%{box-shadow:0 0 0 8px rgba(201,168,76,0)}}
         @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
-      <div className="p-4 lg:p-8 animate-fade-in">
+      <div className="px-4 py-3 animate-fade-in">
 
         {/* ═══ Side-by-side wrapper ═══ */}
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6 w-full items-start">
+        <div className="flex w-full flex-col gap-4">
 
           {/* ── LEFT PANEL (60%) — Riddle + Controls ── */}
-          <div className="flex flex-col gap-3 md:gap-4 w-full md:w-[60%] order-2 md:order-1">
+          <div className="flex w-full flex-col gap-3 order-2">
 
             {/* Demo Mode ribbon */}
             {demoMode && (
@@ -878,6 +928,9 @@ export default function HuntPage() {
               </div>
               <div className="flex items-center gap-2 md:gap-3">
                 <span className="text-[#F5E6D3] text-sm md:text-base font-semibold">Clue {activeClueIdx + 1} of {activeRiddles.length}</span>
+                <span className="px-2 py-1 rounded-lg border border-[#4B9B8E]/40 bg-[#4B9B8E]/15 text-[#7EE4D4] text-[11px] font-bold">
+                  {completedClues.size}/{activeRiddles.length} checkpoints
+                </span>
                 <span className="px-3 py-1.5 bg-[#C9A84C]/15 rounded-full text-[#C9A84C] text-[11px] md:text-[13px] font-bold">⚡ {xpEarned} XP</span>
               </div>
             </div>
@@ -1008,23 +1061,56 @@ export default function HuntPage() {
           </div>
 
           {/* ── RIGHT PANEL (40%) — Sticky Map ── */}
-          <div className="w-full md:w-[40%] order-1 md:order-2 md:sticky md:top-[80px] flex flex-col">
+          <div className="order-1 flex w-full flex-col">
+
+            <div className="mb-2 rounded-2xl border border-[#C9A84C]/25 bg-white/5 px-3 py-2 backdrop-blur-xl">
+              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[#C4A882]">
+                <span>Clue {activeClueIdx + 1} of {activeRiddles.length}</span>
+                <span>{Math.round(((activeClueIdx + 1) / activeRiddles.length) * 100)}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-black/35">
+                <div className="h-full rounded-full bg-[linear-gradient(90deg,#D4893F,#C9A84C)] transition-all duration-500" style={{ width: `${Math.round(((activeClueIdx + 1) / activeRiddles.length) * 100)}%` }} />
+              </div>
+            </div>
 
             {/* Map container */}
-            <div
-              className="w-full rounded-xl overflow-hidden border border-[#C9A84C]/20 bg-[#1C1638]/90 relative z-0"
-              style={{ height: '460px' }}
-            >
-              <HuntMap
-                riddles={activeRiddles}
-                activeClueIdx={activeClueIdx}
-                completedClues={completedClues}
-                userLat={userLat}
-                userLng={userLng}
-                players={playerStates}
-                demoMode={demoMode}
-                monumentId={huntMonumentId}
-              />
+            <div className="rounded-2xl border border-[#C9A84C]/20 bg-white/5 p-2 backdrop-blur-xl">
+              <div className="relative z-0 w-full overflow-hidden rounded-2xl border border-[#C9A84C]/20 bg-[#1C1638]/90">
+                <HuntMap
+                  riddles={activeRiddles}
+                  activeClueIdx={activeClueIdx}
+                  completedClues={completedClues}
+                  userLat={userLat}
+                  userLng={userLng}
+                  players={playerStates}
+                  demoMode={demoMode}
+                  monumentId={huntMonumentId}
+                />
+
+                <div className="absolute right-3 top-3 z-[1200] flex flex-col gap-2">
+                  <button
+                    onClick={speakCurrentClue}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#C9A84C]/35 bg-[#0F0B1E]/85 text-[#C9A84C]"
+                    aria-label="Voice clue"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setShowHint(prev => !prev)}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#C9A84C]/35 bg-[#0F0B1E]/85 text-[#C9A84C]"
+                    aria-label="Toggle hint"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={recenterOnActiveClue}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#C9A84C]/35 bg-[#0F0B1E]/85 text-[#C9A84C]"
+                    aria-label="Recenter hunt"
+                  >
+                    <Crosshair className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Player status chips */}

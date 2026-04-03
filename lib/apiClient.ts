@@ -27,9 +27,11 @@ export const api = {
     }),
 
   // Recognition
-  recognize: (imageB64: string, filename = 'image.jpg') =>
+  recognize: (imageB64: string, filename = 'image.jpg', options?: Record<string, unknown>) =>
     apiClient.post('/monument/recognize', {
-      image_b64: imageB64, filename
+      image_b64: imageB64,
+      filename,
+      ...(options || {}),
     }),
 
   // Quiz

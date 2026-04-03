@@ -16,7 +16,7 @@ import { saveMonument, monumentNameToId } from "@/lib/monumentStore"
 import { useLang } from "@/lib/languageContext"
 import { useAudioGuide } from "@/hooks/useAudioGuide"
 import { 
-  getImageCacheKey, getCache, setCache, 
+  getCache, setCache, 
   CACHE_DURATION, prewarmBackend 
 } from '@/lib/cache'
 
@@ -29,6 +29,40 @@ const MONUMENT_NAMES: Record<string, string> = {
   'kedarnath': 'Kedarnath Temple', 'meenakshi': 'Meenakshi Amman Temple', 'mysore-palace': 'Mysore Palace',
   'hawa-mahal': 'Hawa Mahal Jaipur', 'charminar': 'Charminar Hyderabad', 'victoria-memorial': 'Victoria Memorial Kolkata',
   'ajanta': 'Ajanta Caves', 'konark': 'Konark Sun Temple', 'india-gate': 'India Gate Delhi',
+}
+
+const CONFIDENCE_THRESHOLD = 0.65
+
+async function hashFile(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer()
+  const digest = await crypto.subtle.digest('SHA-256', buffer)
+  const bytes = new Uint8Array(digest)
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32)
+}
+
+function suggestMonuments(baseName?: string): string[] {
+  const list = Object.values(MONUMENT_NAMES)
+  if (!baseName) return list.slice(0, 3)
+  const needle = baseName.toLowerCase()
+  const ranked = list
+    .map(name => ({
+      name,
+      score: name.toLowerCase().includes(needle) ? 2 : needle.includes(name.toLowerCase()) ? 1 : 0,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.name)
+  const unique = Array.from(new Set(ranked))
+  return unique.slice(0, 3)
+}
+
+function getConfidenceValue(resultData: RecognitionResult): number {
+  if (typeof resultData.confidence === 'number') return resultData.confidence
+  if (typeof resultData.confidence_score === 'number') return resultData.confidence_score / 100
+  if (typeof resultData.confidence === 'string') {
+    const map: Record<string, number> = { high: 0.9, medium: 0.6, low: 0.35 }
+    return map[resultData.confidence.toLowerCase()] || 0.5
+  }
+  return 0.5
 }
 
 function LoadingSpinner() {
@@ -89,7 +123,7 @@ export default function RecognitionPage() {
     }
     previewReader.readAsDataURL(file)
 
-    const compressImage = (f: File): Promise<string> => {
+    const preprocessImage = (f: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('Image processing timeout')), 10000)
         const canvas = document.createElement('canvas')
@@ -97,13 +131,55 @@ export default function RecognitionPage() {
         img.onload = () => {
           clearTimeout(timeout)
           try {
-            const maxW = 600
+            const maxW = 900
             const scale = Math.min(1, maxW / img.width)
             canvas.width = img.width * scale
             canvas.height = img.height * scale
             const ctx = canvas.getContext('2d')!
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-            resolve(canvas.toDataURL('image/jpeg', 0.6).split(',')[1])
+
+            // Normalize contrast/lighting for monument textures.
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            const data = imageData.data
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i]
+              const g = data[i + 1]
+              const b = data[i + 2]
+              const avg = (r + g + b) / 3
+              const enhanced = Math.min(255, Math.max(0, (avg - 120) * 1.12 + 120))
+              data[i] = Math.min(255, r * 0.82 + enhanced * 0.18)
+              data[i + 1] = Math.min(255, g * 0.82 + enhanced * 0.18)
+              data[i + 2] = Math.min(255, b * 0.82 + enhanced * 0.18)
+            }
+
+            // Lightweight edge emphasis to improve structure detection.
+            const copy = new Uint8ClampedArray(data)
+            const width = canvas.width
+            const height = canvas.height
+            const kernel = [
+              0, -1, 0,
+              -1, 5, -1,
+              0, -1, 0,
+            ]
+            for (let y = 1; y < height - 1; y++) {
+              for (let x = 1; x < width - 1; x++) {
+                for (let c = 0; c < 3; c++) {
+                  let sum = 0
+                  let k = 0
+                  for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                      const idx = ((y + ky) * width + (x + kx)) * 4 + c
+                      sum += copy[idx] * kernel[k++]
+                    }
+                  }
+                  const idx = (y * width + x) * 4 + c
+                  data[idx] = Math.max(0, Math.min(255, sum))
+                }
+              }
+            }
+
+            ctx.putImageData(imageData, 0, 0)
+            resolve(canvas.toDataURL('image/jpeg', 0.72).split(',')[1])
           } catch (e) { reject(e) }
         }
         img.onerror = () => {
@@ -114,7 +190,8 @@ export default function RecognitionPage() {
       })
     }
 
-    const cacheKey = getImageCacheKey(file)
+    const imageHash = await hashFile(file)
+    const cacheKey = `recognition_hash_${imageHash}`
     const cached = getCache(cacheKey, CACHE_DURATION.recognition)
     if (cached) {
       setResult(cached)
@@ -129,9 +206,30 @@ export default function RecognitionPage() {
     }, 6000)
 
     try {
-      const base64 = await compressImage(file)
-      const res = await api.recognize(base64, file.name)
-      const resultData = res.data
+      const base64 = await preprocessImage(file)
+      const res = await api.recognize(base64, file.name, {
+        context_prompt: 'Identify the Indian monument and return monument_name, location (city/state), era_or_dynasty, architecture_style, confidence_score, and key_identifiers.',
+        requested_fields: ['monument_name', 'location', 'era_or_dynasty', 'architecture_style', 'confidence_score', 'key_identifiers'],
+      })
+      const resultData = { ...res.data } as RecognitionResult
+      const confidenceValue = getConfidenceValue(resultData)
+      const hasDetectedMonument =
+        typeof resultData.monument_name === 'string' &&
+        resultData.monument_name.trim().length > 0 &&
+        resultData.monument_name !== 'Unknown'
+
+      if (confidenceValue < CONFIDENCE_THRESHOLD) {
+        resultData.low_confidence = true
+        if (!hasDetectedMonument) resultData.is_unknown = true
+        resultData.suggestions = suggestMonuments(resultData.monument_name)
+        resultData.brief_description = resultData.brief_description || 'Low-confidence recognition. Review suggested matches below.'
+      }
+
+      if (!hasDetectedMonument) {
+        resultData.is_unknown = true
+        resultData.suggestions = suggestMonuments(resultData.monument_name)
+        resultData.brief_description = resultData.brief_description || 'Could not identify the monument clearly. Review suggested matches below.'
+      }
 
       setCache(cacheKey, resultData)
       setResult(resultData)
@@ -159,13 +257,14 @@ export default function RecognitionPage() {
 
         showToast('⚡ +25 XP for identifying ' + res.data.monument_name + '!')
       } else {
-        showToast('Monument identified! 🏛️')
+        showToast(resultData.is_unknown ? 'Low confidence result. Check suggestions.' : 'Monument identified! 🏛️')
       }
     } catch {
       setResult({
         monument_name: 'Unknown',
         is_unknown: true,
-        brief_description: 'Could not identify. It might not be a recognized monument or the image was unclear.'
+        brief_description: 'Could not identify. It might not be a recognized monument or the image was unclear.',
+        suggestions: suggestMonuments(),
       })
     } finally {
       clearTimeout(slowWarningTimer)
@@ -210,6 +309,10 @@ export default function RecognitionPage() {
     if (!result) return ''
     return result.brief_description || result.history || result.significance || ''
   }
+
+  const hasIdentifiedMonument = Boolean(
+    result?.monument_name && result.monument_name !== 'Unknown'
+  )
 
   return (
     <AppShell>
@@ -281,7 +384,7 @@ export default function RecognitionPage() {
         )}
 
         {/* Error state when result is unknown */}
-        {!loading && result?.is_unknown && (
+        {!loading && result?.is_unknown && !hasIdentifiedMonument && (
           <div style={{ background: 'rgba(196,91,58,0.1)', border: '1px solid rgba(196,91,58,0.5)', borderRadius: 12, padding: 16, color: '#E8A85C', textAlign: 'center', margin: '24px 0' }}>
             <div style={{ fontSize: 24 }}>⚠️</div>
             <p>{t('not_identified')}</p>
@@ -296,9 +399,18 @@ export default function RecognitionPage() {
         )}
 
         {/* Results section */}
-        {!loading && result && !result.is_unknown && (
+        {!loading && result && hasIdentifiedMonument && (
           <div className="mt-8 space-y-8 animate-slide-up">
             <ResultCard result={result} imagePreview={imagePreview} fileName={fileName} />
+
+            {result.low_confidence && (
+              <div style={{
+                background: 'rgba(196,91,58,0.1)', border: '1px solid rgba(196,91,58,0.45)',
+                borderRadius: 10, padding: '10px 14px', color: '#E8A85C', fontSize: '13px'
+              }}>
+                ⚠️ Low confidence detection. Features are enabled, but please verify monument details.
+              </div>
+            )}
 
             {/* XP badge */}
             {result.monument_name && result.monument_name !== 'Unknown' && (

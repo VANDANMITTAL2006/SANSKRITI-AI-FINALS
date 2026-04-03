@@ -191,10 +191,20 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   loading: { en: 'Loading Sanskriti AI...', hi: 'संस्कृति AI लोड हो रहा है...' },
 }
 
-interface LangContextType { lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string }
+type LangUpdater = Lang | ((prev: Lang) => Lang)
+
+interface LangContextType {
+  lang: Lang
+  setLang: (l: LangUpdater) => void
+  toggleLang: () => void
+  t: (key: string) => string
+}
 
 const LangContext = createContext<LangContextType>({
-  lang: 'en', setLang: () => {}, t: (k) => TRANSLATIONS[k]?.en || k
+  lang: 'en',
+  setLang: () => {},
+  toggleLang: () => {},
+  t: (k) => TRANSLATIONS[k]?.en || k,
 })
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -202,14 +212,27 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('sanskriti_lang') as Lang
-    if (saved === 'en' || saved === 'hi') setLangState(saved)
+    if (saved === 'en' || saved === 'hi') {
+      setLangState(saved)
+      document.documentElement.lang = saved
+      document.documentElement.setAttribute('data-lang', saved)
+      return
+    }
+    document.documentElement.lang = 'en'
+    document.documentElement.setAttribute('data-lang', 'en')
   }, [])
 
-  const setLang = (l: Lang) => {
-    setLangState(l)
-    localStorage.setItem('sanskriti_lang', l)
-    document.documentElement.lang = l
-    document.documentElement.setAttribute('data-lang', l)
+  const setLang = (next: LangUpdater) => {
+    const resolved = typeof next === 'function' ? next(lang) : next
+    const safeLang: Lang = resolved === 'hi' ? 'hi' : 'en'
+    setLangState(safeLang)
+    localStorage.setItem('sanskriti_lang', safeLang)
+    document.documentElement.lang = safeLang
+    document.documentElement.setAttribute('data-lang', safeLang)
+  }
+
+  const toggleLang = () => {
+    setLang((prev) => (prev === 'en' ? 'hi' : 'en'))
   }
 
   const t = (key: string): string => {
@@ -218,7 +241,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return entry[lang] || entry.en || key
   }
 
-  return <LangContext.Provider value={{ lang, setLang, t }}>{children}</LangContext.Provider>
+  return <LangContext.Provider value={{ lang, setLang, toggleLang, t }}>{children}</LangContext.Provider>
 }
 
 export function useLang() { return useContext(LangContext) }

@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { 
   Home, Map, Camera, MessageCircle, Leaf, HelpCircle,
-  Trophy, Calendar, Sparkles, Crown, Search, MapPin
+  Trophy, Calendar, Search, MapPin
 } from "lucide-react"
 import { useUser } from '@/lib/userContext'
 import { useAuth } from '@/lib/authContext'
@@ -26,15 +27,15 @@ export function Sidebar() {
   const pathname = usePathname()
   const { userType, userConfig, setUserType } = useUser()
   const { user, profile } = useAuth()
-  const { lang, setLang } = useLang()
+  const { lang, toggleLang } = useLang()
 
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[280px] flex-col bg-[#0F0B1E] border-r border-[#C9A84C]/30 z-50">
       {/* Logo */}
       <div className="p-6 border-b border-[#C9A84C]/20">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg gold-gradient flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-[#0F0B1E]" />
+          <div className="h-10 w-10 overflow-hidden rounded-lg border border-[#C9A84C]/30 bg-[#0e1222]">
+            <Image src="/sanskriti-logo.svg" alt="Sanskriti AI logo" width={40} height={40} className="h-full w-full object-cover" />
           </div>
           <div>
             <h1 className="font-serif text-xl font-bold text-[#C9A84C]">Sanskriti AI</h1>
@@ -76,7 +77,8 @@ export function Sidebar() {
 
         {/* Language toggle */}
         <button
-          onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+          type="button"
+          onClick={toggleLang}
           style={{
             width: '100%', padding: '8px 12px', marginTop: '10px',
             background: 'rgba(201,168,76,0.1)',

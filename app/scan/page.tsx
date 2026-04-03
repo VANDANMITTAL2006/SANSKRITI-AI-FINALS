@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default function RecognizeRoute() {
+export default function ScanRoute() {
   redirect('/recognition')
 }

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/authClient'
 import { useLang } from '@/lib/languageContext'
@@ -60,10 +61,12 @@ export default function AuthPage() {
   const labelStyle: React.CSSProperties = { display: 'block', color: '#C4A882', fontSize: '13px', marginBottom: '6px', fontWeight: 600 }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(170deg, #0F0B1E 0%, #1B1040 30%, #120E24 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(170deg, #0F0B1E 0%, #1B1040 30%, #120E24 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'calc(5rem + env(safe-area-inset-top)) 2rem 2rem' }}>
       <div style={{ width: '100%', maxWidth: '440px', background: 'rgba(28,22,56,0.95)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '24px', padding: '2.5rem', boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🕉️</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
+            <Image src="/sanskriti-logo.svg" alt="Sanskriti AI logo" width={82} height={82} priority />
+          </div>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.8rem', color: '#C9A84C', fontWeight: 700, margin: '0 0 0.3rem' }}>Sanskriti AI</h1>
           <p style={{ color: '#C4A882', fontSize: '0.85rem', margin: 0 }}>{t('heritage_guide_india')}</p>
           <div style={{ color: 'rgba(201,168,76,0.3)', margin: '0.8rem 0', letterSpacing: '0.4em' }}>❖ ─── ✦ ─── ❖</div>

@@ -25,7 +25,7 @@ const NAV_ITEMS = [
 export function TopNav() {
   const pathname = usePathname()
   const { user, profile } = useAuth()
-  const { lang, setLang, t } = useLang()
+  const { lang, toggleLang, t } = useLang()
   const { userType, userConfig, setUserType } = useUser()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -139,7 +139,7 @@ export function TopNav() {
           display: 'flex', alignItems: 'center',
           gap: '6px', flexShrink: 0
         }}>
-          <button onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+          <button type="button" onClick={toggleLang}
             style={{
               padding: '5px 9px',
               background: 'rgba(201,168,76,0.08)',
@@ -349,7 +349,7 @@ export function TopNav() {
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+            <button type="button" onClick={toggleLang}
               style={{
                 padding: '8px 12px', borderRadius: '8px',
                 background: 'rgba(201,168,76,0.1)',

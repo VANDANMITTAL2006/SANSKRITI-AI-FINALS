@@ -281,13 +281,10 @@ export default function ExplorePage() {
   const [explorerComplete, setExplorerComplete] = useState(false)
   const [demoDistance, setDemoDistance] = useState(280)
   const [demoMode] = useState(true)
-  const [userPos, setUserPos] = useState(() => EXPLORE_USER_START[getMonument()?.id || 'taj-mahal'] || EXPLORE_USER_START['taj-mahal'])
+  const [userPos, setUserPos] = useState(EXPLORE_USER_START['taj-mahal'])
   const [isTTSSpeaking, setIsTTSSpeaking] = useState(false)
 
-  const [exploreMonumentId, setExploreMonumentId] = useState(() => {
-    const stored = getMonument()?.id
-    return stored && MONUMENT_ZONES[stored] ? stored : 'taj-mahal'
-  })
+  const [exploreMonumentId, setExploreMonumentId] = useState('taj-mahal')
   const monumentSelected = true // always start directly into explore
   const [monumentsList, setMonumentsList] = useState<{id: string; name: string}[]>([])
   
@@ -303,6 +300,14 @@ export default function ExplorePage() {
       { id: 'red-fort', name: 'Red Fort' },
       { id: 'qutub-minar', name: 'Qutub Minar' }
     ])
+  }, [])
+
+  useEffect(() => {
+    // Load persisted monument only after hydration to avoid SSR/client render drift.
+    const stored = getMonument()?.id
+    if (!stored || !MONUMENT_ZONES[stored]) return
+    setExploreMonumentId(stored)
+    setUserPos(EXPLORE_USER_START[stored] || EXPLORE_USER_START['taj-mahal'])
   }, [])
 
   // ── SPEAK FACT (browser TTS with voice selection) ────────

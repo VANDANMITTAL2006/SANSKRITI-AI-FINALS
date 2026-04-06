@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 export function TopBar() {
   const { profile } = useAuth()
-  const { lang, toggleLang } = useLang()
+  const { lang, toggleLang, t } = useLang()
 
   const initials = useMemo(() => {
     const source = profile?.full_name || profile?.email || 'SA'
@@ -31,7 +31,7 @@ export function TopBar() {
           </div>
           <div className="min-w-0">
             <p className="truncate text-[15px] font-bold tracking-tight text-[#F5E6D3]">Sanskriti AI</p>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-[#8C7B63]">Living Heritage</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#8C7B63]">{t('topbar_living_heritage')}</p>
           </div>
         </Link>
 

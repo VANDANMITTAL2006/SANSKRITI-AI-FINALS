@@ -230,7 +230,7 @@ export default function ChatPage() {
                   opacity: vapiLoading ? 0.7 : 1
                 }}
               >
-                📞 {vapiLoading ? 'Connecting...' : 'Voice Call'}
+                📞 {vapiLoading ? t('connecting') : t('voice_call')}
               </button>
             ) : (
               <button
@@ -244,7 +244,7 @@ export default function ChatPage() {
                   animation: 'pulse 2s infinite'
                 }}
               >
-                📵 End Call
+                📵 {t('end_call')}
               </button>
             )}
           </div>
@@ -303,9 +303,9 @@ export default function ChatPage() {
                 animation: (vapiSpeaking || vapiListening) ? 'pulse 1s infinite' : 'none'
               }}/>
               <span style={{ color: '#C9A84C', fontSize: '13px' }}>
-                {vapiSpeaking ? '🔊 AI is speaking...'
-                 : vapiListening ? '🎤 Listening...'
-                 : '💬 Voice call active — speak your question'}
+                 {vapiSpeaking ? `🔊 ${t('ai_speaking')}`
+                  : vapiListening ? `🎤 ${t('listening')}`
+                  : `💬 ${t('voice_active_prompt')}`}
               </span>
               {transcript && (
                 <span style={{ color: '#C4A882', fontSize: '12px', fontStyle: 'italic' }}>

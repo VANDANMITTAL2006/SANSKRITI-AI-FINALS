@@ -12,22 +12,22 @@ import { useAuth } from '@/lib/authContext'
 import { useLang } from '@/lib/languageContext'
 
 const navItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/recognition", icon: Camera, label: "Recognition" },
-  { href: "/chat", icon: MessageCircle, label: "Chatbot" },
-  { href: "/sustainability", icon: Leaf, label: "Sustainability" },
-  { href: "/quiz", icon: HelpCircle, label: "Quiz" },
-  { href: "/hunt", icon: Search, label: "Treasure Hunt" },
-  { href: "/itinerary", icon: MapPin, label: "Itinerary" },
-  { href: "/achievements", icon: Trophy, label: "Achievements" },
-  { href: "/festivals", icon: Calendar, label: "Festival Calendar" },
+  { href: "/", icon: Home, key: 'nav_home', fallback: 'Home' },
+  { href: "/recognition", icon: Camera, key: 'nav_recognition', fallback: 'Recognition' },
+  { href: "/chat", icon: MessageCircle, key: 'nav_chatbot', fallback: 'Chatbot' },
+  { href: "/sustainability", icon: Leaf, key: '', fallback: 'Sustainability' },
+  { href: "/quiz", icon: HelpCircle, key: 'nav_quiz', fallback: 'Quiz' },
+  { href: "/hunt", icon: Search, key: 'treasure_hunt', fallback: 'Treasure Hunt' },
+  { href: "/itinerary", icon: MapPin, key: 'nav_itinerary', fallback: 'Itinerary' },
+  { href: "/achievements", icon: Trophy, key: 'nav_achievements', fallback: 'Achievements' },
+  { href: "/festivals", icon: Calendar, key: 'nav_festivals', fallback: 'Festival Calendar' },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const { userType, userConfig, setUserType } = useUser()
   const { user, profile } = useAuth()
-  const { lang, toggleLang } = useLang()
+  const { toggleLang, t } = useLang()
 
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[280px] flex-col bg-[#0F0B1E] border-r border-[#C9A84C]/30 z-50">
@@ -88,7 +88,7 @@ export function Sidebar() {
             cursor: 'pointer', transition: 'all 0.2s ease'
           }}
         >
-          {lang === 'en' ? '🇮🇳 हिंदी में देखें' : '🇬🇧 Switch to English'}
+          {t('lang_toggle_to_hi')}
         </button>
 
         {/* User Mode Badge */}
@@ -136,7 +136,7 @@ export function Sidebar() {
               }`}
             >
               <item.icon className={`w-5 h-5 ${isActive ? "text-[#C9A84C]" : "group-hover:text-[#C9A84C]"}`} />
-              <span className="font-medium">{item.label}</span>
+              <span className="font-medium">{item.key ? t(item.key) : item.fallback}</span>
               {isActive && (
                 <div className="ml-auto w-2 h-2 rounded-full bg-[#C9A84C]" />
               )}

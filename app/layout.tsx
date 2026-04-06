@@ -41,11 +41,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" />
       </head>
-      <body className={`${manrope.variable} ${playfair.variable} font-sans antialiased overflow-x-hidden bg-[#050816] text-[#F5E6D3]`}>
+      <body className={`${manrope.variable} ${playfair.variable} font-sans antialiased overflow-x-hidden bg-background text-foreground`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <BackendPrewarmer />
           <AuthProvider>

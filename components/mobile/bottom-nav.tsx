@@ -5,17 +5,19 @@ import { usePathname } from 'next/navigation'
 import { Home, Route, Sparkles, Compass, UserRound } from 'lucide-react'
 import { ScanButton } from './scan-button'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/languageContext'
 
 const tabs = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/itinerary', label: 'Itinerary', icon: Route },
-  { href: '/recognition', label: 'Scan', icon: Sparkles, special: true },
-  { href: '/hunt', label: 'Hunt', icon: Compass },
-  { href: '/profile', label: 'Profile', icon: UserRound },
+  { href: '/', labelKey: 'nav_home', icon: Home },
+  { href: '/itinerary', labelKey: 'nav_itinerary', icon: Route },
+  { href: '/recognition', labelKey: 'nav_recognition', icon: Sparkles, special: true },
+  { href: '/hunt', labelKey: 'nav_hunt', icon: Compass },
+  { href: '/profile', labelKey: 'nav_profile', icon: UserRound },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { t } = useLang()
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-[calc(env(safe-area-inset-bottom)+10px)]">
@@ -40,7 +42,7 @@ export function BottomNav() {
               <span className={cn('flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-200', active ? 'bg-[#C9A84C]/18 text-[#F7D88C] shadow-[0_10px_24px_rgba(201,168,76,0.18)]' : 'bg-transparent text-[#D1C0A1]')}>
                 <Icon className="h-4 w-4" />
               </span>
-              <span>{tab.label}</span>
+              <span>{t(tab.labelKey)}</span>
               <span className={cn('h-1 w-1 rounded-full bg-[#C9A84C] transition-opacity', active ? 'opacity-100' : 'opacity-0')} />
             </Link>
           )

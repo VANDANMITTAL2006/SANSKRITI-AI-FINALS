@@ -1,7 +1,39 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useAuth } from './authContext'
 
 type Lang = 'en' | 'hi'
+
+const LANG_STORAGE_KEY = 'sanskriti-lang'
+const LEGACY_LANG_STORAGE_KEY = 'sanskriti_lang'
+
+function isValidLang(value: string | null): value is Lang {
+  return value === 'en' || value === 'hi'
+}
+
+function readPersistedLang(): Lang | null {
+  if (typeof window === 'undefined') return null
+  const primary = window.localStorage.getItem(LANG_STORAGE_KEY)
+  if (isValidLang(primary)) return primary
+
+  const legacy = window.localStorage.getItem(LEGACY_LANG_STORAGE_KEY)
+  if (isValidLang(legacy)) return legacy
+
+  return null
+}
+
+function persistLang(nextLang: Lang): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(LANG_STORAGE_KEY, nextLang)
+  // Keep legacy key in sync so older builds keep working.
+  window.localStorage.setItem(LEGACY_LANG_STORAGE_KEY, nextLang)
+}
+
+function applyDocumentLang(nextLang: Lang): void {
+  if (typeof document === 'undefined') return
+  document.documentElement.lang = nextLang
+  document.documentElement.setAttribute('data-lang', nextLang)
+}
 
 export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   // Navigation
@@ -9,6 +41,7 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   nav_recognition: { en: 'Recognition', hi: 'पहचान' }, nav_chatbot: { en: 'Chatbot', hi: 'चैटबॉट' },
   nav_quiz: { en: 'Quiz', hi: 'क्विज़' }, nav_hunt: { en: 'Hunt', hi: 'खोज' },
   nav_explore: { en: 'Explore', hi: 'खोजें' },
+  nav_profile: { en: 'Profile', hi: 'प्रोफाइल' },
   nav_achievements: { en: 'Achievements', hi: 'उपलब्धियाँ' }, nav_festivals: { en: 'Festivals', hi: 'उत्सव' },
   nav_itinerary: { en: 'Itinerary', hi: 'यात्रा योजना' },
   // Language toggle
@@ -24,6 +57,24 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   welcome_title: { en: 'Welcome to Sanskriti AI', hi: 'संस्कृति AI में आपका स्वागत है' },
   welcome_subtitle: { en: 'Tell us who you are so we can personalise your experience', hi: 'बताएं आप कौन हैं ताकि हम आपका अनुभव व्यक्तिगत बना सकें' },
   // Home page
+  home_greeting: { en: 'Good evening', hi: 'शुभ संध्या' },
+  home_explore_subtitle: { en: 'Explore India through monuments, hunts, and live scans.', hi: 'स्मारकों, खोज और लाइव स्कैन के साथ भारत को खोजें।' },
+  home_offline_ready: { en: 'Offline ready', hi: 'ऑफलाइन तैयार' },
+  home_quick_actions: { en: 'Quick actions', hi: 'त्वरित कार्य' },
+  home_view_profile: { en: 'View profile', hi: 'प्रोफाइल देखें' },
+  home_scan_monument: { en: 'Scan Monument', hi: 'स्मारक स्कैन करें' },
+  home_scan_desc: { en: 'Camera-first recognition with narration', hi: 'कैमरा-आधारित पहचान और कथन' },
+  home_explore_desc: { en: 'Discover monuments, routes, and live map guidance', hi: 'स्मारक, मार्ग और लाइव नक्शा मार्गदर्शन खोजें' },
+  home_hunt_title: { en: 'Start Treasure Hunt', hi: 'खजाना खोज शुरू करें' },
+  home_hunt_desc: { en: 'Checkpoints, XP, and reward bursts', hi: 'चेकपॉइंट, XP और इनाम' },
+  home_plan_itinerary: { en: 'Plan Itinerary', hi: 'यात्रा योजना बनाएं' },
+  home_plan_itinerary_subtitle: { en: 'Create route across Delhi, Agra, Jaipur', hi: 'दिल्ली, आगरा, जयपुर के लिए मार्ग बनाएं' },
+  home_explore_now: { en: 'Explore now', hi: 'अभी खोजें' },
+  home_festivals: { en: 'Festivals', hi: 'उत्सव' },
+  home_calendar: { en: 'Calendar', hi: 'कैलेंडर' },
+  home_continue_learning: { en: 'Continue learning', hi: 'सीखना जारी रखें' },
+  home_quiz: { en: 'Quiz', hi: 'क्विज़' },
+  topbar_living_heritage: { en: 'Living Heritage', hi: 'जीवित विरासत' },
   hero_badge: { en: 'AI-Powered Heritage Guide', hi: 'AI-संचालित विरासत गाइड' },
   hero_title_1: { en: "Discover India's", hi: 'भारत की' },
   hero_title_2: { en: 'Living Heritage', hi: 'जीवित विरासत खोजें' },
@@ -88,6 +139,11 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   ask_placeholder: { en: 'Ask anything about Indian heritage...', hi: 'भारतीय विरासत के बारे में कुछ भी पूछें...' },
   send: { en: 'Send', hi: 'भेजें' }, ask_by_voice: { en: 'Voice', hi: 'आवाज़' },
   listening: { en: 'Listening...', hi: 'सुन रहे हैं...' },
+  connecting: { en: 'Connecting...', hi: 'कनेक्ट हो रहा है...' },
+  voice_call: { en: 'Voice Call', hi: 'वॉइस कॉल' },
+  end_call: { en: 'End Call', hi: 'कॉल समाप्त' },
+  voice_active_prompt: { en: 'Voice call active — speak your question', hi: 'वॉइस कॉल सक्रिय है — अपना प्रश्न बोलें' },
+  ai_speaking: { en: 'AI is speaking...', hi: 'AI बोल रहा है...' },
   heritage_guide: { en: 'Heritage Guide', hi: 'विरासत गाइड' },
   student_mode: { en: 'Student Mode', hi: 'छात्र मोड' },
   namaste_greeting: { en: "Namaste! I am your AI Heritage Guide. Ask me anything about Indian monuments — their history, architecture, or legends!", hi: 'नमस्ते! मैं आपका AI विरासत गाइड हूँ। भारतीय स्मारकों के बारे में कुछ भी पूछें — उनका इतिहास, वास्तुकला, या किंवदंतियाँ!' },
@@ -113,6 +169,32 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   choose_monument_hunt: { en: 'Choose a monument to begin your treasure hunt adventure', hi: 'अपनी खजाना खोज शुरू करने के लिए स्मारक चुनें' },
   step_of: { en: 'Step', hi: 'चरण' }, i_am_here: { en: '📍 I Am Here!', hi: '📍 मैं यहाँ हूँ!' },
   heritage_hunter: { en: 'Heritage Hunter!', hi: 'विरासत खोजी!' },
+  demo_mode: { en: 'DEMO MODE', hi: 'डेमो मोड' },
+  geo_bypassed: { en: 'Geo bypassed', hi: 'जियो बायपास' },
+  turn_off: { en: 'Turn Off', hi: 'बंद करें' },
+  clue: { en: 'Clue', hi: 'सुराग' },
+  checkpoints: { en: 'checkpoints', hi: 'चेकपॉइंट' },
+  scoreboard: { en: 'Scoreboard', hi: 'स्कोरबोर्ड' },
+  show_hint: { en: 'Show Hint', hi: 'संकेत दिखाएं' },
+  hide_hint: { en: 'Hide Hint', hi: 'संकेत छिपाएं' },
+  verifying_location: { en: 'Verifying location...', hi: 'स्थान सत्यापित हो रहा है...' },
+  location_verified: { en: 'Location verified!', hi: 'स्थान सत्यापित!' },
+  loading_next_clue: { en: 'Loading next clue...', hi: 'अगला सुराग लोड हो रहा है...' },
+  clues_word: { en: 'clues', hi: 'सुराग' },
+  explore_complete: { en: 'Explorer Complete!', hi: 'एक्सप्लोरर पूरा!' },
+  total_xp_exploration: { en: 'Total XP earned this exploration', hi: 'इस अन्वेषण में कुल XP अर्जित' },
+  start_voice_guide: { en: 'Start Voice Guide', hi: 'वॉइस गाइड शुरू करें' },
+  end_voice_guide: { en: 'End Voice Guide', hi: 'वॉइस गाइड समाप्त करें' },
+  zone: { en: 'Zone', hi: 'क्षेत्र' },
+  keep_walking: { en: 'Keep walking...', hi: 'चलते रहें...' },
+  getting_close: { en: 'Getting close!', hi: 'पास पहुंच रहे हैं!' },
+  you_are_here: { en: 'You are here!', hi: 'आप पहुंच गए!' },
+  arrived: { en: 'Arrived!', hi: 'पहुंच गए!' },
+  ive_arrived: { en: "I've Arrived!", hi: 'मैं पहुंच गया/गई!' },
+  audio_narrating: { en: 'Audio guide narrating...', hi: 'ऑडियो गाइड बोल रहा है...' },
+  stop: { en: 'Stop', hi: 'रोकें' },
+  next_zone: { en: 'Next Zone', hi: 'अगला क्षेत्र' },
+  complete_explorer: { en: 'Complete Explorer!', hi: 'एक्सप्लोरर पूरा करें!' },
   share_achievement: { en: 'Share Achievement', hi: 'उपलब्धि साझा करें' },
   explore_more: { en: 'Explore More Monuments', hi: 'अधिक स्मारक खोजें' },
   // Achievements
@@ -149,6 +231,20 @@ export const TRANSLATIONS: Record<string, { en: string; hi: string }> = {
   // Itinerary
   itinerary_title: { en: '🗺️ AI City Itinerary Planner', hi: '🗺️ AI शहर यात्रा योजनाकार' },
   itinerary_subtitle: { en: 'Choose any city in India and get a personalised heritage travel plan', hi: 'भारत का कोई भी शहर चुनें और व्यक्तिगत विरासत यात्रा योजना पाएं' },
+  itinerary_chat_title: { en: 'Heritage Guide Chat', hi: 'विरासत गाइड चैट' },
+  itinerary_chat_subtitle: { en: 'Plan your Indian heritage journey with AI-powered insights', hi: 'AI-संचालित सुझावों से अपनी भारतीय विरासत यात्रा की योजना बनाएं' },
+  itinerary_chat_welcome: { en: 'Welcome to Heritage Guide', hi: 'विरासत गाइड में आपका स्वागत है' },
+  itinerary_chat_welcome_desc: { en: 'Ask me anything about Indian monuments, cities, heritage sites, and plan your perfect itinerary', hi: 'भारतीय स्मारकों, शहरों और विरासत स्थलों के बारे में पूछें और अपनी यात्रा योजना बनाएं' },
+  itinerary_q1: { en: 'Plan a 3-day Delhi itinerary', hi: '3 दिन की दिल्ली यात्रा योजना बनाएं' },
+  itinerary_q1_prompt: { en: 'Create a 3-day itinerary for Delhi with must-visit monuments', hi: 'दिल्ली के लिए 3 दिन की यात्रा योजना बनाएं जिसमें प्रमुख स्मारक हों' },
+  itinerary_q2: { en: 'Taj Mahal guided tour', hi: 'ताजमहल गाइडेड टूर' },
+  itinerary_q2_prompt: { en: 'Give me a detailed guide about visiting Taj Mahal', hi: 'ताजमहल घूमने के लिए विस्तृत गाइड दें' },
+  itinerary_q3: { en: 'North India circuit', hi: 'उत्तर भारत सर्किट' },
+  itinerary_q3_prompt: { en: 'Plan a complete North India heritage circuit', hi: 'पूरा उत्तर भारत विरासत सर्किट बनाएं' },
+  itinerary_q4: { en: 'Cultural festivals', hi: 'सांस्कृतिक उत्सव' },
+  itinerary_q4_prompt: { en: 'What are the best cultural festivals to experience in India?', hi: 'भारत में अनुभव करने के लिए सबसे अच्छे सांस्कृतिक उत्सव कौन से हैं?' },
+  itinerary_chat_placeholder: { en: 'Ask about monuments, plan itineraries, get travel tips...', hi: 'स्मारकों के बारे में पूछें, यात्रा योजना बनाएं, यात्रा सुझाव लें...' },
+  itinerary_connect_error: { en: "I'm having trouble connecting. Please try again in a moment.", hi: 'कनेक्शन में समस्या आ रही है। कृपया थोड़ी देर में फिर प्रयास करें।' },
   num_days: { en: 'Number of Days', hi: 'दिनों की संख्या' },
   search_city: { en: 'Search City', hi: 'शहर खोजें' },
   search_city_placeholder: { en: 'Search city or state...', hi: 'शहर या राज्य खोजें...' },
@@ -208,27 +304,43 @@ const LangContext = createContext<LangContextType>({
 })
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const { profile, setProfile } = useAuth()
   const [lang, setLangState] = useState<Lang>('en')
 
   useEffect(() => {
-    const saved = localStorage.getItem('sanskriti_lang') as Lang
-    if (saved === 'en' || saved === 'hi') {
+    const saved = readPersistedLang()
+    if (saved) {
       setLangState(saved)
-      document.documentElement.lang = saved
-      document.documentElement.setAttribute('data-lang', saved)
+      applyDocumentLang(saved)
       return
     }
-    document.documentElement.lang = 'en'
-    document.documentElement.setAttribute('data-lang', 'en')
-  }, [])
+    // If nothing is in browser storage, fall back to profile preference.
+    if (profile?.language === 'en' || profile?.language === 'hi') {
+      setLangState(profile.language)
+      applyDocumentLang(profile.language)
+      persistLang(profile.language)
+      return
+    }
+    applyDocumentLang('en')
+  }, [profile?.language])
+
+  useEffect(() => {
+    persistLang(lang)
+    applyDocumentLang(lang)
+
+    // Keep profile language aligned with UI language.
+    if (profile && profile.language !== lang) {
+      setProfile((prev) => {
+        if (!prev || prev.language === lang) return prev
+        return { ...prev, language: lang }
+      })
+    }
+  }, [lang, profile, setProfile])
 
   const setLang = (next: LangUpdater) => {
     const resolved = typeof next === 'function' ? next(lang) : next
     const safeLang: Lang = resolved === 'hi' ? 'hi' : 'en'
     setLangState(safeLang)
-    localStorage.setItem('sanskriti_lang', safeLang)
-    document.documentElement.lang = safeLang
-    document.documentElement.setAttribute('data-lang', safeLang)
   }
 
   const toggleLang = () => {

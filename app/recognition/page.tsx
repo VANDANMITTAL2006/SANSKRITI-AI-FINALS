@@ -340,7 +340,7 @@ export default function RecognitionPage() {
                 cursor: 'pointer',
                 background: activeTab === tab ? 'rgba(201,168,76,0.2)' : 'transparent',
                 border: activeTab === tab ? '1px solid #C9A84C' : '1px solid rgba(201,168,76,0.3)',
-                color: activeTab === tab ? '#C9A84C' : '#C4A882'
+                color: activeTab === tab ? '#C9A84C' : 'var(--muted-secondary)'
               }}
             >
               {tab === 'upload' ? t('upload_photo') : t('use_camera')}
@@ -378,7 +378,7 @@ export default function RecognitionPage() {
         {/* Loading */}
         {loading && (
           <div className="mt-8">
-            <p className="text-center text-[#C4A882] mb-4">{t('identifying')}</p>
+            <p className="text-center font-semibold" style={{ color: 'var(--muted-secondary)' }}>{t('identifying')}</p>
             <LoadingSpinner />
           </div>
         )}
@@ -388,7 +388,7 @@ export default function RecognitionPage() {
           <div style={{ background: 'rgba(196,91,58,0.1)', border: '1px solid rgba(196,91,58,0.5)', borderRadius: 12, padding: 16, color: '#E8A85C', textAlign: 'center', margin: '24px 0' }}>
             <div style={{ fontSize: 24 }}>⚠️</div>
             <p>{t('not_identified')}</p>
-            <p style={{ fontSize: '13px', marginTop: 4 }}>{t('try_clearer')}</p>
+                <p style={{ fontSize: '13px', marginTop: 4, fontWeight: '600', color: 'var(--muted-secondary)' }}>{t('try_clearer')}</p>
             <button
               onClick={() => setResult(null)}
               style={{ background: 'rgba(201,168,76,0.2)', border: '1px solid #C9A84C', color: '#C9A84C', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', marginTop: 8 }}
@@ -510,7 +510,7 @@ export default function RecognitionPage() {
                   <button onClick={toggleMute} style={{
                     background: 'rgba(28,22,56,0.5)', border: '1px solid rgba(201,168,76,0.2)',
                     borderRadius: '10px', padding: '8px 12px',
-                    color: '#C4A882', fontSize: '13px', cursor: 'pointer'
+                    color: 'var(--muted-secondary)', fontWeight: '600', fontSize: '13px', cursor: 'pointer'
                   }}>
                     {isMuted ? '🔇' : '🔔'}
                   </button>

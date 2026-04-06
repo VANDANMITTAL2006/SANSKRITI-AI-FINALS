@@ -59,17 +59,19 @@ export default function ProfilePage() {
     <AppShell>
       <div className="space-y-4 px-4 pb-6">
         <AppCard className="p-0 overflow-hidden">
-          <div className="bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.18),transparent_32%),linear-gradient(180deg,rgba(17,24,39,0.9),rgba(9,13,25,0.96))] p-4">
+          <div style={{ background: 'linear-gradient(180deg, rgba(17,24,39,0.9), rgba(9,13,25,0.96))', padding: '1rem' }}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[22px] border border-[#C9A84C]/22 bg-black/25 text-lg font-semibold text-[#F7D88C]">{initials}</div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-[22px] border" style={{ borderColor: 'var(--primary)', backgroundColor: 'rgba(0,0,0,0.25)', color: 'var(--primary)', fontSize: 'large', fontWeight: 600 }}>
+                  {initials}
+                </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-[#8C7B63]">Profile</p>
-                  <h1 className="mt-1 text-xl font-semibold text-[#F5E6D3]">{safeProfile.full_name || 'Explorer'}</h1>
-                  <p className="text-sm text-[#C4A882]">{userConfig?.subtitle || 'Your XP, badges, and settings live here.'}</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em] font-semibold" style={{ color: 'var(--muted-secondary)' }}>Profile</p>
+                  <h1 className="mt-1 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>{safeProfile.full_name || 'Explorer'}</h1>
+                  <p className="text-sm" style={{ color: 'var(--muted-secondary)' }}>{userConfig?.subtitle || 'Your XP, badges, and settings live here.'}</p>
                 </div>
               </div>
-              <span className="rounded-full border border-[#C9A84C]/25 bg-[#C9A84C]/12 px-3 py-1 text-xs font-semibold text-[#F7D88C]">⚡ {safeProfile.total_xp} XP</span>
+              <span className="rounded-full border px-3 py-1 text-xs font-semibold transition-colors" style={{ borderColor: 'var(--primary)', backgroundColor: 'rgba(201, 168, 76, 0.12)', color: 'var(--primary)' }}>⚡ {safeProfile.total_xp} XP</span>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -78,10 +80,10 @@ export default function ProfilePage() {
                 { label: 'Badges', value: safeProfile.badges.length, icon: BadgeCheck },
                 { label: 'Rank', value: '#24', icon: Trophy },
               ].map((item) => (
-                <div key={item.label} className="rounded-[18px] border border-white/10 bg-white/5 p-3">
-                  <item.icon className="h-4 w-4 text-[#F7D88C]" />
-                  <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-[#8C7B63]">{item.label}</p>
-                  <p className="mt-1 text-lg font-semibold text-[#F5E6D3]">{item.value}</p>
+                <div key={item.label} className="rounded-[18px] border p-3 transition-colors" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--card)' }}>
+                  <item.icon className="h-4 w-4" style={{ color: 'var(--primary)' }} />
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: 'var(--muted-secondary)' }}>{item.label}</p>
+                  <p className="mt-1 text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{item.value}</p>
                 </div>
               ))}
             </div>
@@ -91,33 +93,35 @@ export default function ProfilePage() {
         <AppCard>
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-[#8C7B63]">Current level</p>
-              <h2 className="text-lg font-semibold text-[#F5E6D3]">{level.title}</h2>
+              <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: 'var(--muted-secondary)' }}>Current level</p>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{level.title}</h2>
             </div>
-            <div className="rounded-full border border-[#C9A84C]/20 bg-[#C9A84C]/12 px-3 py-1 text-sm font-semibold text-[#F7D88C]">{progress}%</div>
+            <div className="rounded-full border px-3 py-1 text-sm font-semibold transition-colors" style={{ borderColor: 'var(--primary)', backgroundColor: 'rgba(201, 168, 76, 0.12)', color: 'var(--primary)' }}>
+              {progress}%
+            </div>
           </div>
-          <div className="h-2 rounded-full bg-white/8">
-            <div className="h-full rounded-full bg-[linear-gradient(135deg,#C9A84C,#D4893F)]" style={{ width: `${progress}%` }} />
+          <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--muted, rgba(28, 22, 56, 0.6))' }}>
+            <div className="h-full rounded-full bg-[linear-gradient(135deg,#C9A84C,#D4893F)]" style={{ width: `${progress}%`, transition: 'width 0.3s ease' }} />
           </div>
         </AppCard>
 
         <section className="grid grid-cols-2 gap-2">
-          <button className="app-card flex items-center justify-between rounded-[20px] px-4 py-3 text-left" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          <button className="app-card flex items-center justify-between rounded-[20px] px-4 py-3 text-left transition-colors" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ color: 'var(--foreground)' }}>
             <div className="flex items-center gap-3">
-              <MoonStar className="h-5 w-5 text-[#F7D88C]" />
+              <MoonStar className="h-5 w-5" style={{ color: 'var(--primary)' }} />
               <div>
-                <p className="text-sm font-semibold text-[#F5E6D3]">Theme</p>
-                <p className="text-xs text-[#C4A882]">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--card-foreground)' }}>Theme</p>
+                <p className="text-xs" style={{ color: 'var(--muted-secondary)' }}>{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
               </div>
             </div>
           </button>
 
-          <button type="button" className="app-card flex items-center justify-between rounded-[20px] px-4 py-3 text-left" onClick={toggleLang}>
+          <button type="button" className="app-card flex items-center justify-between rounded-[20px] px-4 py-3 text-left transition-colors" onClick={toggleLang} style={{ color: 'var(--foreground)' }}>
             <div className="flex items-center gap-3">
-              <Globe className="h-5 w-5 text-[#F7D88C]" />
+              <Globe className="h-5 w-5" style={{ color: 'var(--primary)' }} />
               <div>
-                <p className="text-sm font-semibold text-[#F5E6D3]">Language</p>
-                <p className="text-xs text-[#C4A882]">{lang === 'en' ? 'English' : 'हिंदी'}</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--card-foreground)' }}>Language</p>
+                <p className="text-xs" style={{ color: 'var(--muted-secondary)' }}>{lang === 'en' ? 'English' : 'हिंदी'}</p>
               </div>
             </div>
           </button>
@@ -125,26 +129,33 @@ export default function ProfilePage() {
 
         <AppCard>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#F5E6D3]">Mode</h2>
-            <button onClick={() => setUserType(userType === 'student' ? 'tourist' : 'student')} className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-[#F7D88C]">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--card-foreground)' }}>Mode</h2>
+            <button onClick={() => setUserType(userType === 'student' ? 'tourist' : 'student')} className="rounded-full border px-3 py-1 text-xs font-semibold transition-colors" style={{ borderColor: 'var(--border)', color: 'var(--primary)' }}>
               Switch
             </button>
           </div>
-          <p className="text-sm text-[#C4A882]">{userConfig?.subtitle || 'Toggle between learning and travel-focused guidance.'}</p>
+          <p className="text-sm" style={{ color: 'var(--muted-secondary)' }}>{userConfig?.subtitle || 'Toggle between learning and travel-focused guidance.'}</p>
         </AppCard>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-[#F5E6D3]">Badges</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--card-foreground)' }}>Badges</h2>
           {BADGES.map((badge) => {
             const earned = safeProfile.badges.includes(badge.id)
             return (
-              <div key={badge.id} className={`app-card flex items-center gap-3 rounded-[20px] p-4 ${earned ? 'border-[#C9A84C]/30 bg-[#C9A84C]/10' : ''}`}>
+              <div 
+                key={badge.id} 
+                className={`app-card flex items-center gap-3 rounded-[20px] p-4 transition-colors`}
+                style={{
+                  borderColor: earned ? 'var(--primary)' : 'var(--border)',
+                  backgroundColor: earned ? 'rgba(201, 168, 76, 0.08)' : 'var(--card)',
+                }}
+              >
                 <div className="text-2xl">{earned ? badge.icon : '🔒'}</div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[#F5E6D3]">{badge.title}</p>
-                  <p className="text-sm text-[#C4A882]">{badge.desc}</p>
+                  <p className="font-semibold" style={{ color: 'var(--card-foreground)' }}>{badge.title}</p>
+                  <p className="text-sm" style={{ color: 'var(--muted-secondary)' }}>{badge.desc}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-[#8C7B63]" />
+                <ChevronRight className="h-4 w-4" style={{ color: 'var(--muted-secondary)' }} />
               </div>
             )
           })}
@@ -152,14 +163,14 @@ export default function ProfilePage() {
 
         <AppCard className="safe-bottom-space">
           <div className="flex items-center gap-3">
-            <Flame className="h-5 w-5 text-[#F7D88C]" />
+            <Flame className="h-5 w-5" style={{ color: 'var(--primary)' }} />
             <div>
-              <p className="font-semibold text-[#F5E6D3]">Offline-first UI</p>
-              <p className="text-sm text-[#C4A882]">Core screens stay usable with cached data and local state.</p>
+              <p className="font-semibold" style={{ color: 'var(--card-foreground)' }}>Offline-first UI</p>
+              <p className="text-sm" style={{ color: 'var(--muted-secondary)' }}>Core screens stay usable with cached data and local state.</p>
             </div>
           </div>
           <div className="mt-4">
-            <Button asChild className="w-full rounded-2xl bg-[#C9A84C] text-[#0E0916]">
+            <Button asChild className="w-full rounded-2xl" style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}>
               <a href="/explore">Continue exploring</a>
             </Button>
           </div>

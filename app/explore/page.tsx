@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { useAuth } from "@/lib/authContext"
 import { addXP, computeAndSaveBadges } from "@/lib/authClient"
+import { useLang } from "@/lib/languageContext"
 import { useVapi } from "@/hooks/useVapi"
 
 import { ChevronDown } from "lucide-react"
@@ -271,6 +272,7 @@ const ExploreMap = dynamic(() => Promise.resolve(function ExploreMapInner({
 export default function ExplorePage() {
   const router = useRouter()
   const { user, profile, setProfile } = useAuth()
+  const { t } = useLang()
   const { isCallActive, isSpeaking, startCall, endCall, sendZoneContext } = useVapi()
 
   const [currentZoneIndex, setCurrentZoneIndex] = useState(0)
@@ -404,7 +406,7 @@ export default function ExplorePage() {
         <div style={{ textAlign: 'center', padding: '40px 20px', animation: 'confetti 0.6s ease' }}>
           <div style={{ fontSize: '64px', marginBottom: '16px' }}>🏛️</div>
           <h1 style={{ color: '#C9A84C', fontFamily: 'Georgia,serif', fontSize: '32px', marginBottom: '8px' }}>
-            Explorer Complete!
+            {t('explore_complete')}
           </h1>
           <p style={{ color: '#F5E6D3', fontSize: '16px', marginBottom: '24px' }}>
             You have explored all {activeZones.length} historic zones of the {MONUMENT_NAMES[exploreMonumentId] || 'Monument'}
@@ -412,7 +414,7 @@ export default function ExplorePage() {
           <div style={{ fontSize: '48px', fontWeight: '700', color: '#C9A84C', marginBottom: '8px' }}>
             +{totalXP} XP
           </div>
-          <p style={{ color: '#C4A882', marginBottom: '32px' }}>Total XP earned this exploration</p>
+          <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', marginBottom: '32px' }}>{t('total_xp_exploration')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
             {activeZones.map(z => (
               <div key={z.id} style={{
@@ -488,8 +490,8 @@ export default function ExplorePage() {
                 </select>
                 <ChevronDown style={{ position: 'absolute', right: 0, top: 6, width: 14, height: 14, color: '#C9A84C', pointerEvents: 'none' }} />
               </div>
-              <p style={{ color: '#C4A882', fontSize: '13px', margin: '4px 0 0' }}>
-                Zone {currentZoneIndex + 1} of {activeZones.length}
+              <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: '13px', margin: '4px 0 0' }}>
+                {t('zone')} {currentZoneIndex + 1} {t('of')} {activeZones.length}
               </p>
             </div>
 
@@ -500,7 +502,7 @@ export default function ExplorePage() {
                 padding: '10px 16px', color: '#0F0B1E', fontWeight: '700', fontSize: '13px',
                 border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
               }}>
-                📞 Start Voice Guide
+                📞 {t('start_voice_guide')}
               </button>
             ) : (
               <button onClick={endCall} style={{
@@ -508,7 +510,7 @@ export default function ExplorePage() {
                 color: 'white', fontWeight: '700', fontSize: '13px', border: 'none',
                 cursor: 'pointer', animation: 'pulse 2s infinite'
               }}>
-                📵 End Voice Guide
+                📵 {t('end_voice_guide')}
               </button>
             )}
           </div>
@@ -550,8 +552,8 @@ export default function ExplorePage() {
               <h2 style={{ color: '#C9A84C', fontFamily: 'Georgia,serif', fontSize: '22px', marginBottom: '4px' }}>
                 {zone.emoji} {zone.name}
               </h2>
-              <p style={{ color: '#C4A882', fontSize: '12px', marginBottom: '16px' }}>
-                Zone {currentZoneIndex + 1} of {activeZones.length} • +{zone.xp} XP on arrival
+              <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: '12px', marginBottom: '16px' }}>
+                {t('zone')} {currentZoneIndex + 1} {t('of')} {activeZones.length} • +{zone.xp} XP on arrival
               </p>
 
               {/* Direction hint */}
@@ -584,8 +586,8 @@ export default function ExplorePage() {
                   }}>
                     {demoDistance}m
                   </div>
-                  <div style={{ color: '#C4A882', fontSize: '14px', marginTop: '4px' }}>
-                    {demoDistance > 100 ? '🚶 Keep walking...' : demoDistance > 30 ? '📍 Getting close!' : '✅ You are here!'}
+                  <div style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: '14px', marginTop: '4px' }}>
+                    {demoDistance > 100 ? `🚶 ${t('keep_walking')}` : demoDistance > 30 ? `📍 ${t('getting_close')}` : `✅ ${t('you_are_here')}`}
                   </div>
                 </div>
               </div>
@@ -601,7 +603,7 @@ export default function ExplorePage() {
                   border: 'none', cursor: arrivedAtZone ? 'default' : 'pointer',
                 }}
               >
-                {arrivedAtZone ? '✅ Arrived!' : "📍 I've Arrived!"}
+                {arrivedAtZone ? `✅ ${t('arrived')}` : `📍 ${t('ive_arrived')}`}
               </button>
             </div>
           )}
@@ -658,7 +660,7 @@ export default function ExplorePage() {
                     animation: 'pulse 1s infinite'
                   }}/>
                   <span style={{ color: '#C9A84C', fontSize: '13px' }}>
-                    🔊 Audio guide narrating...
+                    🔊 {t('audio_narrating')}
                   </span>
                   <button
                     onClick={stopNarration}
@@ -666,12 +668,13 @@ export default function ExplorePage() {
                       marginLeft: 'auto',
                       background: 'none',
                       border: 'none',
-                      color: '#C4A882',
+                      color: 'var(--muted-secondary)',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       fontSize: '12px'
                     }}
                   >
-                    ⏹ Stop
+                    ⏹ {t('stop')}
                   </button>
                 </div>
               )}
@@ -689,7 +692,7 @@ export default function ExplorePage() {
                     border: 'none', cursor: 'pointer', width: '100%'
                   }}
                 >
-                  Next Zone: {activeZones[currentZoneIndex + 1].emoji} {activeZones[currentZoneIndex + 1].name} →
+                  {t('next_zone')}: {activeZones[currentZoneIndex + 1].emoji} {activeZones[currentZoneIndex + 1].name} →
                 </button>
               ) : (
                 <button
@@ -700,7 +703,7 @@ export default function ExplorePage() {
                     border: 'none', cursor: 'pointer', width: '100%'
                   }}
                 >
-                  🎉 Complete Explorer!
+                  🎉 {t('complete_explorer')}
                 </button>
               )}
             </div>

@@ -455,7 +455,7 @@ function LoadingSpinner({ text }: { text?: string }) {
         borderRadius: '50%',
         animation: 'spin 1s linear infinite'
       }} />
-      {text && <p style={{ color: '#C4A882', fontSize: 14, margin: 0 }}>{text}</p>}
+      {text && <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: 14, margin: 0 }}>{text}</p>}
     </div>
   )
 }
@@ -775,7 +775,7 @@ export default function HuntPage() {
           <div style={{ background: 'rgba(28,22,56,0.9)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 20, padding: 40, maxWidth: 520, margin: '2rem auto', textAlign: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🔒</div>
             <h2 style={{ color: '#C9A84C', fontFamily: 'Georgia,serif', fontSize: 22, margin: '0 0 12px' }}>Location Required</h2>
-            <p style={{ color: '#C4A882', fontSize: 15, lineHeight: 1.6, marginBottom: 16 }}>
+            <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: 15, lineHeight: 1.6, marginBottom: 16 }}>
               You must be physically present at <strong style={{ color: '#E8C97A' }}>{monumentName}</strong> to join this hunt.
             </p>
             {userDistance !== null && (
@@ -802,7 +802,7 @@ export default function HuntPage() {
           <div style={{ background: 'rgba(28,22,56,0.9)', border: '1px solid rgba(196,91,58,0.4)', borderRadius: 20, padding: 40, maxWidth: 520, margin: '2rem auto', textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📍</div>
             <h2 style={{ color: '#E8A85C', fontFamily: 'Georgia,serif', fontSize: 20, margin: '0 0 12px' }}>Location Access Required</h2>
-            <p style={{ color: '#C4A882', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>Please enable GPS / location services.</p>
+            <p style={{ color: 'var(--muted-secondary)', fontWeight: '600', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>Please enable GPS / location services.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button onClick={() => checkMonumentGeo(huntMonumentId)} style={{ padding: '12px 24px', borderRadius: 12, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', color: '#C9A84C', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>🔄 Try Again</button>
               <button onClick={activateDemo} style={{ padding: '12px 24px', borderRadius: 12, background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(212,137,63,0.2))', border: '1px solid rgba(201,168,76,0.5)', color: '#E8C97A', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>🎮 Demo Mode</button>
@@ -828,7 +828,7 @@ export default function HuntPage() {
           <div className="glass-card rounded-xl p-8 text-center animate-fade-in">
             <div className="text-6xl mb-4">🏆</div>
             <h2 className="font-serif text-2xl font-bold text-[#C9A84C] mb-2">{t('heritage_hunter')}</h2>
-            <p className="text-[#C4A882] mb-4">You completed the Taj Mahal Treasure Hunt!</p>
+            <p className="text-[#C4A882] mb-4" style={{ color: 'var(--muted-secondary)', fontWeight: '600' }}>You completed the Taj Mahal Treasure Hunt!</p>
             <div className="inline-block px-4 py-2 bg-[#534AB7]/20 rounded-full mb-6 animate-xp-pulse">
               <span className="text-[#534AB7] font-bold">⚡ +500 XP Bonus + {xpEarned} XP Total</span>
             </div>
@@ -887,8 +887,8 @@ export default function HuntPage() {
             {/* Demo Mode ribbon */}
             {demoMode && (
               <div className="bg-gradient-to-br from-[#C9A84C]/20 to-[#D4893F]/15 border border-[#C9A84C]/50 rounded-xl p-3 flex items-center justify-between text-[#E8C97A] text-xs md:text-sm font-bold">
-                <span>🎮 DEMO MODE<span className="hidden sm:inline"> — Geo bypassed</span></span>
-                <button onClick={() => setDemoMode(false)} className="bg-[#C9A84C]/20 border border-[#C9A84C]/40 rounded-lg px-2 md:px-3 py-1 text-[#C9A84C] text-[10px] md:text-sm font-semibold cursor-pointer min-h-[44px] flex items-center justify-center">Turn Off</button>
+                <span>🎮 {t('demo_mode')}<span className="hidden sm:inline"> — {t('geo_bypassed')}</span></span>
+                <button onClick={() => setDemoMode(false)} className="bg-[#C9A84C]/20 border border-[#C9A84C]/40 rounded-lg px-2 md:px-3 py-1 text-[#C9A84C] text-[10px] md:text-sm font-semibold cursor-pointer min-h-[44px] flex items-center justify-center">{t('turn_off')}</button>
               </div>
             )}
 
@@ -924,12 +924,12 @@ export default function HuntPage() {
                   </select>
                   <ChevronDown style={{ position: 'absolute', right: 0, top: 7, width: 13, height: 13, color: '#C9A84C', pointerEvents: 'none' }} />
                 </div>
-                <p className="text-[#C4A882] text-xs m-0 mt-0.5">{t('treasure_hunt')}</p>
+                <p className="text-xs m-0 mt-0.5" style={{ color: 'var(--muted-secondary)', fontWeight: '600' }}>{t('treasure_hunt')}</p>
               </div>
               <div className="flex items-center gap-2 md:gap-3">
-                <span className="text-[#F5E6D3] text-sm md:text-base font-semibold">Clue {activeClueIdx + 1} of {activeRiddles.length}</span>
+                <span className="text-[#F5E6D3] text-sm md:text-base font-semibold">{t('clue')} {activeClueIdx + 1} {t('of')} {activeRiddles.length}</span>
                 <span className="px-2 py-1 rounded-lg border border-[#4B9B8E]/40 bg-[#4B9B8E]/15 text-[#7EE4D4] text-[11px] font-bold">
-                  {completedClues.size}/{activeRiddles.length} checkpoints
+                  {completedClues.size}/{activeRiddles.length} {t('checkpoints')}
                 </span>
                 <span className="px-3 py-1.5 bg-[#C9A84C]/15 rounded-full text-[#C9A84C] text-[11px] md:text-[13px] font-bold">⚡ {xpEarned} XP</span>
               </div>
@@ -952,7 +952,7 @@ export default function HuntPage() {
                 onClick={() => setShowLeaderboard(!showLeaderboard)} 
                 className="flex items-center gap-2 px-4 rounded-xl bg-[#1C1638]/90 border border-[#C9A84C]/20 text-[#C9A84C] text-xs md:text-sm font-semibold cursor-pointer min-h-[44px]"
               >
-                🏆 Scoreboard {showLeaderboard ? '▲' : '▼'}
+                🏆 {t('scoreboard')} {showLeaderboard ? '▲' : '▼'}
               </button>
 
               {showLeaderboard && (
@@ -960,7 +960,7 @@ export default function HuntPage() {
                   <div className="md:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setShowLeaderboard(false)} />
                   <div className="fixed md:static bottom-0 left-0 w-full md:w-auto max-h-[50vh] md:max-h-none overflow-y-auto z-50 bg-[#1C1638] md:bg-[#1C1638]/90 border-t md:border border-[#C9A84C]/20 md:rounded-xl rounded-t-2xl p-4 md:p-3 animate-slide-up md:mt-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-none">
                     <div className="flex md:hidden justify-between items-center mb-4">
-                      <span className="text-[#C9A84C] font-bold text-lg">🏆 Scoreboard</span>
+                      <span className="text-[#C9A84C] font-bold text-lg">🏆 {t('scoreboard')}</span>
                       <button onClick={() => setShowLeaderboard(false)} className="text-[#C4A882] text-2xl p-2 min-h-[44px] leading-none">&times;</button>
                     </div>
                     {leaderboard.map((p, i) => (
@@ -972,7 +972,7 @@ export default function HuntPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] md:text-xs">
-                          <span className="text-[#7A6E5C]">{p.clues} clue{p.clues !== 1 ? 's' : ''} ✓</span>
+                          <span className="text-[#7A6E5C]">{p.clues} {t('clues_word')} ✓</span>
                           <span className="text-[#C9A84C] font-bold">⚡ {p.xp} XP</span>
                         </div>
                       </div>
@@ -991,7 +991,7 @@ export default function HuntPage() {
                     background: 'rgba(201,168,76,0.2)', color: '#C9A84C',
                     fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
                     borderRadius: 20, letterSpacing: 1
-                  }}>Clue {activeClueIdx + 1}</span>
+                  }}>{t('clue')} {activeClueIdx + 1}</span>
                   <span style={{ color: '#7A6E5C', fontSize: 12 }}>📍 {activeRiddle.location_name}</span>
                 </div>
 
@@ -1007,7 +1007,7 @@ export default function HuntPage() {
                 {/* Hint toggle */}
                 <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] rounded-lg mb-4 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-xs md:text-sm font-semibold cursor-pointer">
                   {showHint ? <EyeOff size={16} /> : <Eye size={16} />}
-                  {showHint ? 'Hide Hint' : 'Show Hint'}
+                  {showHint ? t('hide_hint') : t('show_hint')}
                 </button>
                 {showHint && (
                   <div style={{
@@ -1029,9 +1029,9 @@ export default function HuntPage() {
                   style={{ background: checkingGeo ? 'rgba(83,74,183,0.3)' : 'linear-gradient(135deg, #534AB7, #7C3AED)' }}
                 >
                   {checkingGeo ? (
-                    <>📍 Verifying location...</>
+                    <>📍 {t('verifying_location')}</>
                   ) : (
-                    <><MapPin size={18} /> I Am Here</>
+                    <><MapPin size={18} /> {t('i_am_here')}</>
                   )}
                 </button>
               </div>
@@ -1046,7 +1046,7 @@ export default function HuntPage() {
                 borderRadius: 16,
               }}>
                 <div style={{ color: '#4B9B8E', fontSize: 15, fontWeight: 700, marginBottom: 14 }}>
-                  ✓ Location verified!
+                  ✓ {t('location_verified')}
                 </div>
                 <div style={{
                   width: 32, height: 32, margin: '0 auto',
@@ -1055,7 +1055,7 @@ export default function HuntPage() {
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }} />
-                <p style={{ color: '#7ECDC0', fontSize: 13, marginTop: 12 }}>Loading next clue...</p>
+                <p style={{ color: '#7ECDC0', fontSize: 13, marginTop: 12 }}>{t('loading_next_clue')}</p>
               </div>
             )}
           </div>
@@ -1065,7 +1065,7 @@ export default function HuntPage() {
 
             <div className="mb-2 rounded-2xl border border-[#C9A84C]/25 bg-white/5 px-3 py-2 backdrop-blur-xl">
               <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[#C4A882]">
-                <span>Clue {activeClueIdx + 1} of {activeRiddles.length}</span>
+                <span>{t('clue')} {activeClueIdx + 1} {t('of')} {activeRiddles.length}</span>
                 <span>{Math.round(((activeClueIdx + 1) / activeRiddles.length) * 100)}%</span>
               </div>
               <div className="h-2 rounded-full bg-black/35">
